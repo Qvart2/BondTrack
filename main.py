@@ -1,90 +1,170 @@
 import requests
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import ScreenManager, Screen
 
 # Определяем дизайн приложения через Kivy Language
 kv = '''
-BoxLayout:
-    orientation: 'vertical'
-    padding: 20
-    spacing: 15
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.95, 0.95, 1  # Светлый фон
-        Rectangle:
-            pos: self.pos
-            size: self.size
+ScreenManager:
+    MainMenu:
+    AddBondScreen:
+    BondListScreen:
 
-    # Панель ввода данных
+<MainMenu>:
+    name: 'menu'
     BoxLayout:
-        size_hint_y: None
-        height: '50dp'
-        spacing: 15
-        TextInput:
-            id: ticker_input
-            hint_text: "Введите тикер облигации"
-            multiline: False
-            size_hint_x: 0.4
-            background_color: (1, 1, 1, 1)
-            foreground_color: (0, 0, 0, 1)
-            hint_text_color: (0.7, 0.7, 0.7, 1)
-        TextInput:
-            id: purchase_price_input
-            hint_text: "Цена покупки"
-            input_filter: 'float'
-            multiline: False
-            size_hint_x: 0.3
-            background_color: (1, 1, 1, 1)
-            foreground_color: (0, 0, 0, 1)
-            hint_text_color: (0.7, 0.7, 0.7, 1)
-        TextInput:
-            id: purchase_date_input
-            hint_text: "Дата покупки (YYYY-MM-DD)"
-            multiline: False
-            size_hint_x: 0.3
-            background_color: (1, 1, 1, 1)
-            foreground_color: (0, 0, 0, 1)
-            hint_text_color: (0.7, 0.7, 0.7, 1)
-
-    Button:
-        text: "Добавить облигацию"
-        size_hint_y: None
-        height: '50dp'
-        background_color: (0.2, 0.6, 0.8, 1)  # Цвет кнопки
-        color: (1, 1, 1, 1)  # Цвет текста
-        on_release: app.add_bond()
-
-    Label:
-        text: "Список облигаций:"
-        size_hint_y: None
-        height: '40dp'
-        font_size: '18sp'
-        bold: True
-        color: (0, 0, 0, 1)
-
-    ScrollView:
-        BoxLayout:
-            id: bonds_list
-            orientation: 'vertical'
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        canvas.before:
+            Color:
+                rgba: 0.95, 0.95, 0.95, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: 'Главное меню'
+            font_size: '24sp'
+            color: (0, 0, 0, 1)
+        Button:
+            text: 'Добавить облигацию'
             size_hint_y: None
-            height: self.minimum_height
-            spacing: 10
+            height: '50dp'
+            background_color: (0.2, 0.6, 0.8, 1)
+            color: (1, 1, 1, 1)
+            on_release: root.manager.current = 'add'
+        Button:
+            text: 'Список облигаций'
+            size_hint_y: None
+            height: '50dp'
+            background_color: (0.2, 0.6, 0.8, 1)
+            color: (1, 1, 1, 1)
+            on_release: root.manager.current = 'list'
+
+<AddBondScreen>:
+    name: 'add'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 15
+        canvas.before:
+            Color:
+                rgba: 0.95, 0.95, 0.95, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Первая строка ввода: тикер и цена покупки
+        BoxLayout:
+            size_hint_y: None
+            height: '50dp'
+            spacing: 15
+            TextInput:
+                id: ticker_input
+                hint_text: "Введите тикер облигации"
+                multiline: False
+                size_hint_x: 0.4
+                background_color: (1, 1, 1, 1)
+                foreground_color: (0, 0, 0, 1)
+                hint_text_color: (0.7, 0.7, 0.7, 1)
+            TextInput:
+                id: purchase_price_input
+                hint_text: "Цена покупки"
+                input_filter: 'float'
+                multiline: False
+                size_hint_x: 0.3
+                background_color: (1, 1, 1, 1)
+                foreground_color: (0, 0, 0, 1)
+                hint_text_color: (0.7, 0.7, 0.7, 1)
+
+        # Вторая строка ввода: дата покупки и количество облигаций
+        BoxLayout:
+            size_hint_y: None
+            height: '50dp'
+            spacing: 15
+            TextInput:
+                id: purchase_date_input
+                hint_text: "Дата покупки (YYYY-MM-DD)"
+                multiline: False
+                size_hint_x: 0.5
+                background_color: (1, 1, 1, 1)
+                foreground_color: (0, 0, 0, 1)
+                hint_text_color: (0.7, 0.7, 0.7, 1)
+            TextInput:
+                id: quantity_input
+                hint_text: "Количество облигаций"
+                input_filter: 'int'
+                multiline: False
+                size_hint_x: 0.5
+                background_color: (1, 1, 1, 1)
+                foreground_color: (0, 0, 0, 1)
+                hint_text_color: (0.7, 0.7, 0.7, 1)
+
+        Button:
+            text: "Добавить облигацию"
+            size_hint_y: None
+            height: '50dp'
+            background_color: (0.2, 0.6, 0.8, 1)
+            color: (1, 1, 1, 1)
+            on_release:
+                app.add_bond()
+                root.manager.current = 'menu'
+
+        Button:
+            text: "Вернуться в меню"
+            size_hint_y: None
+            height: '50dp'
+            on_release: root.manager.current = 'menu'
+
+<BondListScreen>:
+    name: 'list'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 15
+        canvas.before:
+            Color:
+                rgba: 0.95, 0.95, 0.95, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Список облигаций:"
+            size_hint_y: None
+            height: '40dp'
+            font_size: '18sp'
+            bold: True
+            color: (0, 0, 0, 1)
+        ScrollView:
+            BoxLayout:
+                id: bonds_list
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+
+        Button:
+            text: "Вернуться в меню"
+            size_hint_y: None
+            height: '50dp'
+            on_release: root.manager.current = 'menu'
 
 <BondItem>:
     size_hint_y: None
-    height: '160dp'
+    height: '200dp'
     padding: 10
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1  # Белый фон для элемента
+            rgba: 1, 1, 1, 1
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [10,]  # Закругленные углы
+            radius: [10,]
     BoxLayout:
         orientation: 'vertical'
         spacing: 6
@@ -104,39 +184,33 @@ BoxLayout:
         BoxLayout:
             spacing: 5
             Label:
+                text: "Количество: " + str(root.quantity)
+                color: (0.2, 0.2, 0.2, 1)
+            Label:
                 text: "Месячный доход: " + str(round(root.monthly_income, 2))
                 color: (0.2, 0.2, 0.2, 1)
+        BoxLayout:
+            spacing: 5
             Label:
                 text: "Годовой доход: " + str(round(root.annual_income, 2))
                 color: (0.2, 0.2, 0.2, 1)
-        BoxLayout:
-            orientation: 'vertical'
-            spacing: 2
             Label:
-                text: "Режим торгов (BOARDID): " + root.board_id
+                text: "Доходность к погашению: " + str(round(root.ytm, 2)) + "%"
                 color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Куп он (%): " + str(root.coupon_percent)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Купоны (₽): " + str(root.coupon_value)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "НКД: " + str(root.accrued_interest)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Цена бумаги (%): " + str(root.last_price)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Номинал: " + str(root.facevalue)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Дата погашения: " + root.matdate
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Оферта: " + root.offerdate
-                color: (0.2, 0.2, 0.2, 1)
+        Label:
+            text: "Дата погашения: " + root.matdate
+            color: (0.2, 0.2, 0.2, 1)
 '''
+
+# Определяем экраны
+class MainMenu(Screen):
+    pass
+
+class AddBondScreen(Screen):
+    pass
+
+class BondListScreen(Screen):
+    pass
 
 # Виджет для отображения одной облигации с дополнительными данными
 class BondItem(BoxLayout):
@@ -150,10 +224,12 @@ class BondItem(BoxLayout):
     accrued_interest = NumericProperty(0)
     last_price = NumericProperty(0)
     facevalue = NumericProperty(0)
-    matdate = StringProperty('')
+    matdate = StringProperty('')    # Дата погашения
     offerdate = StringProperty('')
     monthly_income = NumericProperty(0)
     annual_income = NumericProperty(0)
+    quantity = NumericProperty(0)
+    ytm = NumericProperty(0)
 
 # Функция для получения BOARDID по тикеру (режим торгов)
 def get_board_id(ticker):
@@ -223,11 +299,8 @@ def get_marketdata_last(board, ticker):
         print(f"Ошибка при получении LAST цены: {e}")
     return 0
 
-# Функция расчёта доходности
+# Функция расчёта доходности (на одну облигацию)
 def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue):
-    # Если задан купон в рублях, используем его;
-    # иначе, если есть купон в % и номинал, рассчитываем по ним;
-    # в крайнем случае – рассчитываем от цены покупки.
     if coupon_value > 0:
         annual_income = coupon_value
     elif coupon_percent > 0 and facevalue > 0:
@@ -237,36 +310,50 @@ def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue):
     monthly_income = annual_income / 12
     return monthly_income, annual_income
 
+# Функция расчёта доходности к погашению (YTM) по приблизительной формуле
+def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturity_date):
+    try:
+        purchase_dt = datetime.strptime(purchase_date, "%Y-%m-%d")
+        maturity_dt = datetime.strptime(maturity_date, "%Y-%m-%d")
+        years_to_maturity = (maturity_dt - purchase_dt).days / 365.25
+        if years_to_maturity <= 0:
+            return 0
+        # Приблизительная формула YTM:
+        ytm = (coupon_value + (facevalue - purchase_price) / years_to_maturity) / ((facevalue + purchase_price) / 2)
+        return ytm * 100  # в процентах
+    except Exception as e:
+        print("Ошибка при расчёте YTM:", e)
+        return 0
+
 class BondsApp(App):
     def build(self):
         self.title = "Отслеживание доходности облигаций"
         self.bonds = []  # Список для хранения облигаций
-        self.root = Builder.load_string(kv)
-        return self.root
+        self.sm = Builder.load_string(kv)
+        return self.sm
 
     def add_bond(self):
-        # Читаем введённые пользователем данные
-        ticker = self.root.ids.ticker_input.text.strip()
-        purchase_price_text = self.root.ids.purchase_price_input.text.strip()
-        purchase_date = self.root.ids.purchase_date_input.text.strip()
-        if not ticker or not purchase_price_text:
-            print("Не заполнены обязательные поля: тикер и цена покупки.")
+        screen = self.sm.get_screen('add')
+        ticker = screen.ids.ticker_input.text.strip()
+        purchase_price_text = screen.ids.purchase_price_input.text.strip()
+        purchase_date = screen.ids.purchase_date_input.text.strip()
+        quantity_text = screen.ids.quantity_input.text.strip()
+        if not ticker or not purchase_price_text or not purchase_date or not quantity_text:
+            print("Не заполнены обязательные поля: тикер, цена покупки, дата покупки и количество.")
             return
         try:
             purchase_price = float(purchase_price_text)
+            quantity = int(quantity_text)
         except Exception as e:
-            print("Неверный формат цены покупки.")
+            print("Неверный формат цены покупки или количества.")
             return
 
-        # Получаем режим торгов (BOARDID) автоматически
         board_id = get_board_id(ticker)
         if not board_id:
             print("Не удалось получить BOARDID для тикера:", ticker)
             return
 
-        # Получаем остальные данные облигации из securities
         securities_data = get_securities_data(board_id, ticker)
-        # Получаем рыночную цену бумаги
         last_price = get_marketdata_last(board_id, ticker)
 
         shortname = securities_data.get("SHORTNAME", ticker)
@@ -274,17 +361,23 @@ class BondsApp(App):
         coupon_value = securities_data.get("COUPONVALUE", 0)
         accrued_interest = securities_data.get("ACCRUEDINT", 0)
         facevalue = securities_data.get("FACEVALUE", 0)
-        matdate = securities_data.get("MATDATE", "")
+        matdate = securities_data.get("MATDATE", "")  # Дата погашения
         offerdate = securities_data.get("OFFERDATE", "нет оферты")
 
-        # Рассчитываем доходность
+        # Расчёт доходности для одной облигации
         monthly_income, annual_income = calculate_income(purchase_price, coupon_value, coupon_percent, facevalue)
+        # Итоговый доход с учётом количества облигаций
+        total_monthly_income = monthly_income * quantity
+        total_annual_income = annual_income * quantity
 
-        # Формируем объект облигации
+        # Расчёт доходности к погашению (если задана дата погашения)
+        ytm = calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, matdate) if matdate else 0
+
         bond = {
             'ticker': ticker,
             'purchase_price': purchase_price,
             'purchase_date': purchase_date,
+            'quantity': quantity,
             'shortname': shortname,
             'board_id': board_id,
             'coupon_percent': coupon_percent,
@@ -294,19 +387,21 @@ class BondsApp(App):
             'facevalue': facevalue,
             'matdate': matdate,
             'offerdate': offerdate,
-            'monthly_income': monthly_income,
-            'annual_income': annual_income
+            'monthly_income': total_monthly_income,
+            'annual_income': total_annual_income,
+            'ytm': ytm
         }
         self.bonds.append(bond)
         self.update_bonds_view()
 
         # Очищаем поля ввода
-        self.root.ids.ticker_input.text = ""
-        self.root.ids.purchase_price_input.text = ""
-        self.root.ids.purchase_date_input.text = ""
+        screen.ids.ticker_input.text = ""
+        screen.ids.purchase_price_input.text = ""
+        screen.ids.purchase_date_input.text = ""
+        screen.ids.quantity_input.text = ""
 
     def update_bonds_view(self):
-        bonds_list = self.root.ids.bonds_list
+        bonds_list = self.sm.get_screen('list').ids.bonds_list
         bonds_list.clear_widgets()
         for bond in self.bonds:
             item = BondItem(
@@ -323,7 +418,9 @@ class BondsApp(App):
                 matdate=bond['matdate'],
                 offerdate=bond['offerdate'],
                 monthly_income=bond['monthly_income'],
-                annual_income=bond['annual_income']
+                annual_income=bond['annual_income'],
+                quantity=bond['quantity'],
+                ytm=bond['ytm']
             )
             bonds_list.add_widget(item)
 
