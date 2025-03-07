@@ -25,7 +25,7 @@ jobs:
           buildozer_version: stable
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: bin/*.apk
+          name: package
+          path: bin/myapp-0.1-arm64-v8a_armeabi-v7a-debug.apk
