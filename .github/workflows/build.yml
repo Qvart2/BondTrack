@@ -27,7 +27,7 @@ jobs:
       - name: Build APK with Buildozer via Docker
         run: |
           export DOCKER_BUILDKIT=0
-          IMAGE_TAG="stable"
+          IMAGE_TAG="latest"
           echo "Running Buildozer build using image: kivy/buildozer:${IMAGE_TAG}"
           docker run --rm -v "${{ github.workspace }}":/home/user/hostcwd kivy/buildozer:${IMAGE_TAG} buildozer -v android debug
 
