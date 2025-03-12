@@ -5,6 +5,10 @@ title = MyKivyApp
 package.name = mykivyapp
 # Домен пакета
 package.domain = org.example
+# Версия приложения
+version = 0.1
+# Директория с исходным кодом
+source.dir = .
 # Включаем расширения, которые понадобятся (например, py, kv, png, jpg)
 source.include_exts = py,kv,png,jpg,atlas
 # Точка входа (если main.py – основной файл, можно не указывать)
