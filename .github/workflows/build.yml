@@ -22,7 +22,7 @@ jobs:
         run: |
           IMAGE_TAG="latest"  # Задаём конкретный тег вместо latest
           echo "Pulling image: kivy/buildozer:${IMAGE_TAG}"
-          docker pull kivy/buildozer:${IMAGE_TAG}
+          docker pull ghcr.io/kivy/buildozer:${IMAGE_TAG}
 
       - name: Build APK with Buildozer via Docker
         run: |
