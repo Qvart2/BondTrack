@@ -10,7 +10,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses-dev libreadline-dev
+          sudo apt-get install -y libtinfo-dev
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
