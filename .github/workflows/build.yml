@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install libtinfo5
-        run: sudo apt-get install -y libtinfo5
+      - name: Install libncurses5
+        run: sudo apt-get install -y libncurses5
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
