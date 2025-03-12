@@ -2,11 +2,9 @@ name: Build APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build-android:
@@ -15,15 +13,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Запуск сборки через Docker-образ с Buildozer
-      - name: Build APK with Buildozer Action
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Setup Python (optional)
+        uses: actions/setup-python@v4
         with:
-          workdir: .          # Если ваши файлы лежат в корне репозитория
-          buildozer_version: "2022.08.01"  # Явно указываем стабильную версию вместо latest
+          python-version: 3.10
 
-      - name: List output directory
+      - name: Pull Buildozer Docker image
+        run: |
+          IMAGE_TAG="stable"  # Задаём конкретный тег вместо latest
+          echo "Pulling image: kivy/buildozer:${IMAGE_TAG}"
+          docker pull kivy/buildozer:${IMAGE_TAG}
+
+      - name: Build APK with Buildozer via Docker
+        run: |
+          export DOCKER_BUILDKIT=0
+          IMAGE_TAG="stable"
+          echo "Running Buildozer build using image: kivy/buildozer:${IMAGE_TAG}"
+          docker run --rm -v "${{ github.workspace }}":/home/user/hostcwd kivy/buildozer:${IMAGE_TAG} buildozer -v android debug
+
+      - name: List APK output
         run: ls -la bin/
 
       - name: Upload APK artifact
