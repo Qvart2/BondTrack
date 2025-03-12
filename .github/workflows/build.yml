@@ -10,7 +10,9 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses-dev libtinfo6
+          sudo apt-get install -y libncurses6 libncurses-dev libtinfo6 wget
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt-get install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
