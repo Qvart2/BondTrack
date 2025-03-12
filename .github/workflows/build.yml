@@ -7,6 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install libtinfo5
+        run: |
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt-get install -f  # Устанавливает отсутствующие зависимости
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -15,11 +20,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
