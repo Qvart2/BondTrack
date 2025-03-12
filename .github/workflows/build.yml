@@ -10,18 +10,35 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses6 libncurses-dev libtinfo6 wget
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
-          sudo apt-get install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            android-sdk
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
+      - name: Install Buildozer
+        run: |
+          python3 -m pip install --user --upgrade buildozer
+      - name: Initialize Buildozer
+        run: |
+          buildozer init
       - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
-        with:
-          python-version: 3.8
-          buildozer-cmd: buildozer -v android debug
+        run: |
+          buildozer android debug
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
