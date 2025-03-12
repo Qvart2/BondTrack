@@ -20,7 +20,7 @@ jobs:
 
       - name: Pull Buildozer Docker image
         run: |
-          IMAGE_TAG="python3"  # Задаём конкретный тег вместо latest
+          IMAGE_TAG="latest"  # Задаём конкретный тег вместо latest
           echo "Pulling image: kivy/buildozer:${IMAGE_TAG}"
           docker pull kivy/buildozer:${IMAGE_TAG}
 
