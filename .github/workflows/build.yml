@@ -14,31 +14,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Шаг 1: Проверка кода из репозитория
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Шаг 2: (Опционально) Вывести список файлов для отладки
-      - name: List project files
-        run: ls -la
-
-      # Шаг 3: Запуск сборки APK с помощью Buildozer Action
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          workdir: .        # Если файлы проекта лежат в корне
-          buildozer_version: "2022.08.01"
-          # Если нужно, можно указать конкретную версию, например "2023.09.03"
+          python-version: 3.10
 
-      # Шаг 4: Проверка наличия APK (для отладки)
-      - name: Check APK output
+      - name: Build APK with Buildozer via Docker
+        run: |
+          # Выбираем конкретный тег вместо latest
+          IMAGE_TAG="2022.08.01"
+          echo "Pulling image: kivy/buildozer:${IMAGE_TAG}"
+          docker pull kivy/buildozer:${IMAGE_TAG} || true
+          echo "Running Buildozer build..."
+          docker run --rm -v "${{ github.workspace }}":/home/user/hostcwd kivy/buildozer:${IMAGE_TAG} buildozer -v android debug
+
+      - name: List output directory
         run: ls -la bin/
 
-      # Шаг 5: Загрузка APK как артефакт
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-package
-          # Путь к APK. Если ваш buildozer.spec настроен стандартно, APK будет в папке bin.
+          name: apk
           path: bin/*.apk
