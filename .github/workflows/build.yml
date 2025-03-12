@@ -11,6 +11,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libtinfo-dev
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.8
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
