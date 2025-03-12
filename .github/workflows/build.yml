@@ -7,8 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install libncurses5
-        run: sudo apt-get install -y libncurses5
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncurses-dev libreadline-dev
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
