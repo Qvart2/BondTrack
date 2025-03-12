@@ -10,26 +10,18 @@ on:
 
 jobs:
   build-android:
-    name: Build for Android
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      # Запуск сборки через Docker-образ с Buildozer
+      - name: Build APK with Buildozer Action
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
-          python-version: 3.10
-
-      - name: Build APK with Buildozer via Docker
-        run: |
-          # Выбираем конкретный тег вместо latest
-          IMAGE_TAG="2022.08.01"
-          echo "Pulling image: kivy/buildozer:${IMAGE_TAG}"
-          docker pull kivy/buildozer:${IMAGE_TAG} || true
-          echo "Running Buildozer build..."
-          docker run --rm -v "${{ github.workspace }}":/home/user/hostcwd kivy/buildozer:${IMAGE_TAG} buildozer -v android debug
+          workdir: .          # Если ваши файлы лежат в корне репозитория
+          buildozer_version: "2022.08.01"  # Явно указываем стабильную версию вместо latest
 
       - name: List output directory
         run: ls -la bin/
