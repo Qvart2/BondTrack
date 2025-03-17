@@ -21,7 +21,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses6 libncurses-dev libtinfo-dev android-sdk-platform-tools
+          sudo apt-get install -y libncurses6 libncurses-dev libtinfo-dev
 
       # Настройка Java 17 с обязательным параметром distribution
       - name: Set up Java 17
@@ -53,20 +53,23 @@ jobs:
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
 
-      # Добавляем Android Command-line Tools в PATH
+      # Добавляем Android SDK инструменты в PATH
       - name: Add Android SDK to PATH
         run: echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      # Сборка APK с помощью Buildozer; команда sdkmanager теперь игнорирует ошибку Broken pipe
+      # Сборка APK с помощью Buildozer:
+      # 1. Принимаем лицензии Android SDK (игнорируем ошибку Broken pipe)
+      # 2. Принудительно устанавливаем build-tools версии 33.0.0, чтобы избежать проблемы с лицензией Build-Tools 36
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
           python-version: 3.8
           buildozer-cmd: |
             yes | sdkmanager --licenses || true
+            sdkmanager "build-tools;33.0.0" || true
             buildozer -v android debug
 
-      # Загрузка собранных артефактов
+      # Загрузка собранного APK
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
