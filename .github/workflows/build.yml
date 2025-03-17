@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Скачиваем и устанавливаем libtinfo5 вручную
+      # Устанавливаем libtinfo5 вручную
       - name: Install libtinfo5 manually
         run: |
           sudo apt-get update
@@ -17,13 +17,14 @@ jobs:
           sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb || true
           sudo apt-get install -f -y
 
-      # Устанавливаем остальные зависимости для сборки
+      # Устанавливаем остальные зависимости
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses6 libncurses-dev libtinfo-dev android-sdk-platform-tools
+          sudo apt-get install -y libncurses6 libncurses-dev libtinfo-dev
+          sudo apt-get install -y android-sdk-platform-tools
 
-      # Настройка Java (с обязательным параметром distribution)
+      # Настройка Java 17
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -41,6 +42,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
+
+      # Скачиваем и устанавливаем Android Command-line Tools
+      - name: Install Android Command-line Tools
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          unzip commandlinetools-linux-8512546_latest.zip
+          mv cmdline-tools latest
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+
+      # Добавляем Android Command-line Tools в PATH
+      - name: Add Android SDK to PATH
+        run: echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
       # Сборка APK с помощью Buildozer
       - name: Build APK
