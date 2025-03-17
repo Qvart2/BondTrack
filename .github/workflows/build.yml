@@ -38,15 +38,16 @@ jobs:
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
+          # Перемещаем содержимое распакованной папки на уровень выше
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
           
-          # Копируем инструменты в структуру, которую ожидает buildozer
+          # Копируем инструменты в структуру, которую ожидает buildozer (для корректной загрузки sdkmanager)
           mkdir -p $ANDROID_SDK_ROOT/tools
           cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest/* $ANDROID_SDK_ROOT/tools/
           
-          # Обновляем PATH
+          # Обновляем PATH для доступа к инструментам Android SDK
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
           
           # Принимаем лицензии и устанавливаем необходимые компоненты, включая нужный NDK
@@ -58,11 +59,13 @@ jobs:
           # Используем JDK 8 для сборки
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          # Принудительно указываем нужную версию NDK
+          # Убираем конфликтующие переменные из окружения
+          unset ANDROIDNDK
+          unset ANDROID_NDK_LATEST_HOME
+          unset ANDROID_NDK_ROOT
+          # Принудительно задаем нужную версию NDK
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           export ANDROID_NDK=$ANDROID_NDK_HOME
-          # Убираем потенциально конфликтующую переменную
-          unset ANDROIDNDK
           buildozer android debug
         env:
           ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
