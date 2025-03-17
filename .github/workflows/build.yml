@@ -26,45 +26,44 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython
 
-      - name: Set up Android SDK
+      - name: Set up Android SDK and NDK
         run: |
-          # Устанавливаем JAVA_HOME на JDK 8, так как sdkmanager требует именно её
+          # Используем JDK 8 для совместимости с sdkmanager
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Определяем переменную для Android SDK
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $ANDROID_SDK_ROOT
           
-          # Создаем структуру для commandline-tools
+          # Устанавливаем commandline-tools
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
-          
-          # Загружаем и распаковываем commandline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
-          
-          # Перемещаем содержимое распакованной папки cmdline-tools на уровень выше
+          # Перемещаем содержимое распакованной папки на уровень выше
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
           
-          # Создаем каталог tools и копируем туда всю структуру из cmdline-tools/latest
+          # Для совместимости с buildozer копируем инструменты в структуру tools
           mkdir -p $ANDROID_SDK_ROOT/tools
           cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest/* $ANDROID_SDK_ROOT/tools/
           
-          # Обновляем PATH для доступа к sdkmanager и platform-tools
+          # Обновляем PATH
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
           
-          # Принимаем лицензии и устанавливаем необходимые компоненты
+          # Принимаем лицензии и устанавливаем необходимые компоненты, включая совместимый NDK
           yes | sdkmanager --licenses
-          sdkmanager --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "cmdline-tools;latest"
+          sdkmanager --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "cmdline-tools;latest" "ndk;21.4.7075529"
 
       - name: Build APK
         run: |
-          # Используем JDK 8 для сборки
+          # Используем JDK 8 и указываем путь к совместимому NDK
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           buildozer android debug
         env:
           ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
+          ANDROID_NDK_HOME: $HOME/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
