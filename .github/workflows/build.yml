@@ -38,38 +38,36 @@ jobs:
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки на уровень выше
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
           
-          # Копируем инструменты в структуру, которую ожидает buildozer (для корректной загрузки sdkmanager)
+          # Копируем инструменты в структуру, которую ожидает buildozer (для корректной работы sdkmanager)
           mkdir -p $ANDROID_SDK_ROOT/tools
           cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest/* $ANDROID_SDK_ROOT/tools/
           
-          # Обновляем PATH для доступа к инструментам Android SDK
+          # Обновляем PATH для доступа к Android SDK
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
           
-          # Принимаем лицензии и устанавливаем необходимые компоненты, включая нужный NDK
+          # Принимаем лицензии и устанавливаем компоненты, включая нужный NDK (версия 21.4.7075529)
           yes | sdkmanager --licenses
           sdkmanager --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "cmdline-tools;latest" "ndk;21.4.7075529"
 
       - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: ${{ env.HOME }}/.buildozer/android/platform/android-sdk
+          ANDROID_NDK_HOME: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
+          ANDROID_NDK: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
+          ANDROIDNDK: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
+          JAVA_HOME: /usr/lib/jvm/temurin-8-jdk-amd64
         run: |
-          # Используем JDK 8 для сборки
+          # Переопределяем переменные, чтобы убрать конфликты (GitHub Actions может задавать их по умолчанию)
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          # Убираем конфликтующие переменные из окружения
-          unset ANDROIDNDK
-          unset ANDROID_NDK_LATEST_HOME
-          unset ANDROID_NDK_ROOT
-          # Принудительно задаем нужную версию NDK
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           export ANDROID_NDK=$ANDROID_NDK_HOME
+          export ANDROIDNDK=$ANDROID_NDK_HOME
           buildozer android debug
-        env:
-          ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
-          ANDROID_NDK_HOME: $HOME/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
