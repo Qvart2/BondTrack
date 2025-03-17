@@ -55,13 +55,17 @@ jobs:
 
       - name: Build APK
         env:
+          JAVA_HOME: /usr/lib/jvm/temurin-8-jdk-amd64
           ANDROID_SDK_ROOT: ${{ env.HOME }}/.buildozer/android/platform/android-sdk
           ANDROID_NDK_HOME: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
           ANDROID_NDK: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
           ANDROIDNDK: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
-          JAVA_HOME: /usr/lib/jvm/temurin-8-jdk-amd64
         run: |
-          # Переопределяем переменные, чтобы убрать конфликты (GitHub Actions может задавать их по умолчанию)
+          # Сбрасываем переменные, которые могут конфликтовать с нашими настройками
+          unset ANDROID_NDK_ROOT
+          unset ANDROID_NDK_LATEST_HOME
+          unset ANDROIDNDK
+          # Задаём нужные переменные для NDK
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
