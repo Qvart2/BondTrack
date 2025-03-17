@@ -28,19 +28,31 @@ jobs:
 
       - name: Set up Android SDK
         run: |
-          # Создаем директорию для commandline tools
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          cd $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-          # Загружаем архив с инструментами
+          # Определяем переменную для Android SDK
+          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          
+          # Создаем структуру каталогов для commandline-tools
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+          cd $ANDROID_SDK_ROOT/cmdline-tools/latest
+          
+          # Загружаем архив commandline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки на уровень выше
+          
+          # Перемещаем содержимое папки cmdline-tools внутрь каталога latest
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
-          # Указываем переменные окружения и обновляем PATH
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          
+          # Создаем структуру старой версии инструментов, которую ожидает Buildozer
+          mkdir -p $ANDROID_SDK_ROOT/tools/bin
+          cp $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          chmod +x $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          
+          # Обновляем PATH для доступа к sdkmanager и platform-tools
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
+          
+          # Принимаем лицензии и устанавливаем необходимые компоненты
           yes | sdkmanager --licenses
           sdkmanager --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "cmdline-tools;latest"
 
