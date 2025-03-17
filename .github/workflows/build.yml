@@ -7,24 +7,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Установка зависимостей для сборки
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libncurses6 libncurses-dev libtinfo-dev
+          sudo apt-get install -y libtinfo5 libncurses6 libncurses-dev libtinfo-dev
+
+      # Настройка Java 17
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          java-package: jdk
+          check-latest: false
+          server-id: github
+          server-username: ${{ github.actor }}
+          server-password: ${{ secrets.GITHUB_TOKEN }}
+          overwrite-settings: true
+
+      # Настройка Python 3.8
       - name: Set up Python 3.8
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          java-package: jdk
+
+      # Сборка APK с использованием Buildozer
       - name: Build APK
         uses: digreatbrian/buildozer-action@v2
         with:
           python-version: 3.8
-          buildozer-cmd: buildozer -v android debug
+          buildozer-cmd: |
+            yes | sdkmanager --licenses
+            buildozer -v android debug
+
+      # Загрузка артефактов
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
