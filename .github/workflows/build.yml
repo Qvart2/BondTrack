@@ -28,23 +28,26 @@ jobs:
 
       - name: Set up Android SDK
         run: |
+          # Устанавливаем JAVA_HOME на JDK 8, так как sdkmanager совместим только с ней
+          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
+          
           # Определяем переменную для Android SDK
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           
-          # Создаем структуру каталогов для commandline-tools
+          # Создаем структуру для commandline-tools
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           
-          # Загружаем архив commandline-tools
+          # Загружаем и распаковываем commandline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
           
-          # Перемещаем содержимое папки cmdline-tools внутрь каталога latest
+          # Перемещаем содержимое папки cmdline-tools на уровень выше
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
           
-          # Создаем структуру старой версии инструментов, которую ожидает Buildozer
+          # Создаем структуру, которую ожидает buildozer, и копируем sdkmanager
           mkdir -p $ANDROID_SDK_ROOT/tools/bin
           cp $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
           chmod +x $ANDROID_SDK_ROOT/tools/bin/sdkmanager
@@ -58,6 +61,8 @@ jobs:
 
       - name: Build APK
         run: |
+          # Используем JDK 8 для запуска сборки
+          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           buildozer android debug
         env:
