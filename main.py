@@ -394,7 +394,6 @@ class BondsApp(App):
         self.bonds.append(bond)
         self.update_bonds_view()
 
-        # Очищаем поля ввода
         screen.ids.ticker_input.text = ""
         screen.ids.purchase_price_input.text = ""
         screen.ids.purchase_date_input.text = ""
