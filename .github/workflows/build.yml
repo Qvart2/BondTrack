@@ -30,7 +30,7 @@ jobs:
         run: |
           # Используем JDK 8 для совместимости с sdkmanager и python-for-android
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Определяем корень Android SDK для Buildozer
+          # Задаём корень Android SDK для Buildozer
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
@@ -39,15 +39,14 @@ jobs:
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
+          # Перемещаем содержимое распакованной директории (обычно "cmdline-tools") вверх
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Копируем содержимое cmdline-tools/latest непосредственно в <sdk>/tools,
-          # чтобы sdkmanager оказался по пути: <sdk>/tools/bin/sdkmanager
+          # Создаём символическую ссылку: <sdk>/tools -> <sdk>/cmdline-tools/latest
           rm -rf $ANDROID_SDK_ROOT/tools
-          mkdir -p $ANDROID_SDK_ROOT/tools
-          cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest/* $ANDROID_SDK_ROOT/tools/
+          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
           export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
