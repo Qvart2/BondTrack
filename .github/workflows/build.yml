@@ -30,29 +30,26 @@ jobs:
         run: |
           # Используем JDK 8 для совместимости с sdkmanager и python-for-android
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
+          # Определяем корень Android SDK для Buildozer
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
-          # Устанавливаем commandline-tools в $ANDROID_SDK_ROOT/cmdline-tools/latest
+          # Устанавливаем commandline-tools в ожидаемое место: <sdk>/cmdline-tools/latest/
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки (обычно "cmdline-tools") в текущую директорию
+          # Перемещаем содержимое распакованной папки (директория cmdline-tools) вверх
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Перемещаем распакованные инструменты в директорию tools, которую ожидает Buildozer
-          rm -rf $ANDROID_SDK_ROOT/tools
-          mv $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
-
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
-          export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          # Принимаем лицензии и устанавливаем необходимые компоненты
-          yes | sdkmanager --licenses
-          sdkmanager --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
+          # Принимаем лицензии и устанавливаем необходимые SDK-компоненты, явно указывая --sdk_root
+          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
 
       - name: Remove conflicting default NDK
         run: |
@@ -68,8 +65,6 @@ jobs:
         run: |
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
-          unset ANDROIDNDK
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           export ANDROID_NDK=$ANDROID_NDK_HOME
           buildozer android debug
