@@ -34,19 +34,20 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
-          # Устанавливаем commandline-tools в директорию <sdk>/cmdline-tools/latest/
+          # Скачиваем и распаковываем commandline-tools в <sdk>/cmdline-tools/latest
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки (директория cmdline-tools) вверх
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Копируем содержимое cmdline-tools/latest в <sdk>/tools, чтобы sdkmanager оказался по пути: <sdk>/tools/bin/sdkmanager
+          # Копируем содержимое cmdline-tools/latest непосредственно в <sdk>/tools,
+          # чтобы sdkmanager оказался по пути: <sdk>/tools/bin/sdkmanager
           rm -rf $ANDROID_SDK_ROOT/tools
-          cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
+          mkdir -p $ANDROID_SDK_ROOT/tools
+          cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest/* $ANDROID_SDK_ROOT/tools/
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
           export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
