@@ -34,7 +34,7 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
-          # Устанавливаем commandline-tools в ожидаемое место: <sdk>/cmdline-tools/latest/
+          # Устанавливаем commandline-tools в директорию <sdk>/cmdline-tools/latest/
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
@@ -44,14 +44,14 @@ jobs:
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Создаём каталог tools/bin и создаём символическую ссылку на sdkmanager
-          mkdir -p $ANDROID_SDK_ROOT/tools/bin
-          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+          # Копируем содержимое cmdline-tools/latest в <sdk>/tools, чтобы sdkmanager оказался по пути: <sdk>/tools/bin/sdkmanager
+          rm -rf $ANDROID_SDK_ROOT/tools
+          cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
+          export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          # Принимаем лицензии и устанавливаем необходимые компоненты
+          # Принимаем лицензии и устанавливаем необходимые компоненты, явно указывая --sdk_root
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
 
