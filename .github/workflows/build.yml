@@ -1,79 +1,59 @@
-name: Build APK
+name: Build APK with Buildozer
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      - name: Install dependencies
+      - name: Cache Buildozer and dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.buildozer
+            ~/.local/share/python-for-android
+            ~/.local/bin
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            ${{ runner.os }}-buildozer-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip python3-setuptools python3-venv \
+                             zip unzip openjdk-17-jdk git \
+                             libffi-dev libssl-dev \
+                             autoconf automake cmake pkg-config \
+                             libltdl-dev
+
+      - name: Install Buildozer and dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install buildozer cython
+          pip install --user --upgrade buildozer cython virtualenv
 
-      - name: Set up Android SDK and NDK
+      - name: Check if python-for-android exists
         run: |
-          # Используем JDK 8 для совместимости с sdkmanager и python-for-android
-          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Задаём корневой каталог Android SDK для Buildozer
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT
-
-          # Скачиваем и распаковываем commandline-tools в <sdk>/cmdline-tools/latest
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-          cd $ANDROID_SDK_ROOT/cmdline-tools/latest
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip -q commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки (обычно "cmdline-tools") вверх
-          mv cmdline-tools/* .
-          rm -rf cmdline-tools
-          rm commandlinetools-linux-8512546_latest.zip
-
-          # Создаём симлинк: <sdk>/tools -> <sdk>/cmdline-tools/latest
-          rm -rf $ANDROID_SDK_ROOT/tools
-          ln -sfn $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
-
-          # Обновляем PATH для доступа к sdkmanager и другим утилитам
-          export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-
-          # Принимаем лицензии и устанавливаем необходимые компоненты
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
-
-          # Удаляем конфликтующий системный NDK, если он есть
-          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
+          if [ ! -d "$HOME/.local/share/python-for-android" ]; then
+            echo "python-for-android not found, installing..."
+            buildozer android clean
+          else
+            echo "Using cached python-for-android"
+          fi
 
       - name: Build APK
-        env:
-          ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
-          ANDROID_NDK_HOME: $HOME/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
         run: |
-          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
-          export ANDROID_NDK=$ANDROID_NDK_HOME
-          unset ANDROIDNDK
-          # Создаём директорию для python-for-android, если её нет
-          mkdir -p $HOME/.buildozer/android/platform/python-for-android
-          buildozer -v android debug
+          buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: MyApp-APK
+          name: BondTrack-APK
           path: bin/*.apk
