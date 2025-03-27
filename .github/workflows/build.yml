@@ -37,16 +37,15 @@ jobs:
           # Скачиваем и распаковываем commandline-tools в <sdk>/cmdline-tools/latest
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip -q commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной директории (обычно "cmdline-tools") вверх
+          # Перемещаем содержимое распакованной папки (обычно "cmdline-tools") в текущий каталог
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Копируем содержимое cmdline-tools/latest в <sdk>/tools
-          rm -rf $ANDROID_SDK_ROOT/tools
-          cp -r $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
+          # Создаём (или обновляем) символическую ссылку: <sdk>/tools -> <sdk>/cmdline-tools/latest
+          ln -sfn $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
           export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
