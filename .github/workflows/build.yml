@@ -11,68 +11,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install buildozer cython
-
-      - name: Set up Android SDK and NDK
-        run: |
-          # Используем JDK 8 для совместимости с sdkmanager и python-for-android
-          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Задаём корень Android SDK для Buildozer
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT
-
-          # Скачиваем и распаковываем commandline-tools в <sdk>/cmdline-tools/latest
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-          cd $ANDROID_SDK_ROOT/cmdline-tools/latest
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-          unzip commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной директории (обычно "cmdline-tools") вверх
-          mv cmdline-tools/* .
-          rm -rf cmdline-tools
-          rm commandlinetools-linux-8512546_latest.zip
-
-          # Создаём символическую ссылку: <sdk>/tools -> <sdk>/cmdline-tools/latest
-          rm -rf $ANDROID_SDK_ROOT/tools
-          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
-
-          # Обновляем PATH для доступа к sdkmanager и другим утилитам
-          export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-
-          # Принимаем лицензии и устанавливаем необходимые компоненты, явно указывая --sdk_root
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
-
-      - name: Remove conflicting default NDK
-        run: |
-          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
-          unset ANDROIDNDK
-
       - name: Build APK
-        env:
-          JAVA_HOME: /usr/lib/jvm/temurin-8-jdk-amd64
-          ANDROID_SDK_ROOT: ${{ env.HOME }}/.buildozer/android/platform/android-sdk
-          ANDROID_NDK_HOME: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
-          ANDROID_NDK: ${{ env.HOME }}/.buildozer/android/platform/android-sdk/ndk/21.4.7075529
         run: |
-          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
-          unset ANDROIDNDK
-          export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
-          export ANDROID_NDK=$ANDROID_NDK_HOME
           buildozer android debug
 
       - name: Upload APK
