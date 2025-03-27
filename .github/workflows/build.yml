@@ -30,7 +30,7 @@ jobs:
         run: |
           # Используем JDK 8 для совместимости с sdkmanager и python-for-android
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Определяем корневой каталог Android SDK для Buildozer
+          # Задаём корневой каталог Android SDK для Buildozer
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
@@ -46,16 +46,16 @@ jobs:
 
           # Создаём симлинк: <sdk>/tools -> <sdk>/cmdline-tools/latest
           rm -rf $ANDROID_SDK_ROOT/tools
-          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
+          ln -sfn $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
           export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-          # Принимаем лицензии и устанавливаем необходимые компоненты, явно указывая --sdk_root
+          # Принимаем лицензии и устанавливаем необходимые компоненты
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
 
-          # Удаляем конфликтующий системный NDK, если он существует
+          # Удаляем конфликтующий системный NDK, если он есть
           rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
 
       - name: Build APK
@@ -67,8 +67,9 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           export ANDROID_NDK=$ANDROID_NDK_HOME
-          export ANDROIDNDK=
-          buildozer android clean
+          unset ANDROIDNDK
+          # Создаём директорию для python-for-android, если её нет
+          mkdir -p $HOME/.buildozer/android/platform/python-for-android
           buildozer -v android debug
 
       - name: Upload APK
