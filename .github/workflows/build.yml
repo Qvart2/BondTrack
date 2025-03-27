@@ -30,7 +30,7 @@ jobs:
         run: |
           # Используем JDK 8 для совместимости с sdkmanager и python-for-android
           export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
-          # Задаём корневой каталог Android SDK для Buildozer
+          # Определяем корневой каталог Android SDK для Buildozer
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $ANDROID_SDK_ROOT
 
@@ -39,13 +39,14 @@ jobs:
           cd $ANDROID_SDK_ROOT/cmdline-tools/latest
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
           unzip -q commandlinetools-linux-8512546_latest.zip
-          # Перемещаем содержимое распакованной папки (обычно "cmdline-tools") в текущий каталог
+          # Перемещаем содержимое распакованной папки (обычно "cmdline-tools") вверх
           mv cmdline-tools/* .
           rm -rf cmdline-tools
           rm commandlinetools-linux-8512546_latest.zip
 
-          # Создаём (или обновляем) символическую ссылку: <sdk>/tools -> <sdk>/cmdline-tools/latest
-          ln -sfn $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
+          # Создаём симлинк: <sdk>/tools -> <sdk>/cmdline-tools/latest
+          rm -rf $ANDROID_SDK_ROOT/tools
+          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
 
           # Обновляем PATH для доступа к sdkmanager и другим утилитам
           export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
@@ -53,6 +54,9 @@ jobs:
           # Принимаем лицензии и устанавливаем необходимые компоненты, явно указывая --sdk_root
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-29" "build-tools;29.0.3" "ndk;21.4.7075529"
+
+          # Удаляем конфликтующий системный NDK, если он существует
+          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
 
       - name: Build APK
         env:
@@ -63,8 +67,9 @@ jobs:
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
           export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529
           export ANDROID_NDK=$ANDROID_NDK_HOME
-          unset ANDROIDNDK
-          buildozer android debug
+          export ANDROIDNDK=
+          buildozer android clean
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
