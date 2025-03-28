@@ -1,59 +1,70 @@
-name: Build APK with Buildozer
+name: Build APK
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      - name: Cache Buildozer and dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.buildozer
-            ~/.local/share/python-for-android
-            ~/.local/bin
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
-
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools python3-venv \
-                             zip unzip openjdk-17-jdk git \
-                             libffi-dev libssl-dev \
-                             autoconf automake cmake pkg-config \
-                             libltdl-dev
-
-      - name: Install Buildozer and dependencies
-        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libz-dev libffi-dev libssl-dev 
           python -m pip install --upgrade pip
-          pip install --user --upgrade buildozer cython virtualenv
+          pip install buildozer cython python-for-android
 
-      - name: Check if python-for-android exists
+      - name: Set up Android SDK and NDK
         run: |
-          if [ ! -d "$HOME/.local/share/python-for-android" ]; then
-            echo "python-for-android not found, installing..."
-            buildozer android clean
-          else
-            echo "Using cached python-for-android"
-          fi
+          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
+          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $ANDROID_SDK_ROOT
+          
+          # Устанавливаем commandline-tools
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+          cd $ANDROID_SDK_ROOT/cmdline-tools/latest
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          mv cmdline-tools/* .
+          rm -rf cmdline-tools
+          rm commandlinetools-linux-11076708_latest.zip
+          
+          # Настраиваем PATH
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          
+          # Принимаем лицензии и устанавливаем SDK/NDK
+          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+          
+          # Удаляем старые версии NDK
+          rm -rf $HOME/.buildozer/android/platform/android-ndk-r25b
 
       - name: Build APK
+        env:
+          ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
+          ANDROID_NDK_HOME: $HOME/.buildozer/android/platform/android-sdk/ndk/23.1.7779620
+          ANDROID_NDK: $HOME/.buildozer/android/platform/android-sdk/ndk/23.1.7779620
         run: |
+          export JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
           buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BondTrack-APK
+          name: MyApp-APK
           path: bin/*.apk
