@@ -42,7 +42,9 @@ jobs:
 
       - name: ✅ Принятие лицензий Android SDK
         run: |
-          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses
+          mkdir -p "$ANDROID_HOME/licenses"
+          echo -e "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
 
       - name: 📲 Сборка APK с помощью Buildozer
         run: |
