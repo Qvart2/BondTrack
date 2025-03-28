@@ -1,62 +1,51 @@
-name: 📦 Build Kivy APK
+name: 📱 Build Kivy APK
 
 on:
   push:
     branches:
-      - main  # Запуск на пуш в main
+      - main
   pull_request:
     branches:
-      - main  # Запуск на PR в main
-  workflow_dispatch:  # Возможность запустить вручную
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Клонирование репозитория
-        uses: actions/checkout@v4
-
-      - name: 🛠️ Установка зависимостей для сборки
+      - name: 🛠️ Обновление системы
         run: |
           sudo apt update
+
+      - name: 📦 Установка зависимостей для сборки
+        run: |
           sudo apt install -y autoconf automake libtool libtool-bin \
                               build-essential python3-dev \
                               unzip zip libffi-dev libssl-dev \
-                              libglu1-mesa libgles2-mesa \
+                              mesa-common-dev mesa-utils \
                               python3-venv python3-pip \
                               openjdk-17-jdk
 
-      - name: 🔧 Очистка кеша перед сборкой
-        run: |
-          rm -rf aclocal.m4 autom4te.cache config.h.in config.sub config.guess configure ltmain.sh || true
-          autoreconf --install --force
+      - name: 🔥 Установка Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-      - name: 🏗️ Установка Python-окружения
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install cython buildozer
+      - name: 📥 Клонирование репозитория
+        uses: actions/checkout@v4
 
-      - name: 🔽 Загрузка Android SDK, NDK и Buildozer
+      - name: 📌 Установка pip-зависимостей
         run: |
-          buildozer init
-          buildozer android clean
-          buildozer android update
+          python -m pip install --upgrade pip
+          pip install buildozer cython virtualenv
 
-      - name: 🚀 Сборка APK через Buildozer
+      - name: 📲 Сборка APK с помощью Buildozer
         run: |
-          source venv/bin/activate
-          buildozer -v android debug
+          buildozer android debug
 
-      - name: 🏗️ Проверка наличия сгенерированного APK
-        run: |
-          ls -lh bin/ || echo "Файл APK не найден"
-
-      - name: 📤 Загрузка APK как артефакт
+      - name: 📤 Сохранение APK как артефакт
         uses: actions/upload-artifact@v4
         with:
-          name: my-app-apk
+          name: kivy-app-apk
           path: bin/*.apk
-          retention-days: 7  # Хранить APK 7 дней
