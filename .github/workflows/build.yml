@@ -1,68 +1,62 @@
-name: Build APK
+name: 📦 Build Kivy APK
 
 on:
   push:
     branches:
-      - main
+      - main  # Запуск на пуш в main
   pull_request:
     branches:
-      - main
+      - main  # Запуск на PR в main
+  workflow_dispatch:  # Возможность запустить вручную
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Клонирование репозитория
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      - name: 🛠️ Установка зависимостей для сборки
         run: |
-          python -m pip install --upgrade pip
-          pip install buildozer cython
+          sudo apt update
+          sudo apt install -y autoconf automake libtool libtool-bin \
+                              build-essential python3-dev \
+                              unzip zip libffi-dev libssl-dev \
+                              libglu1-mesa libgles2-mesa \
+                              python3-venv python3-pip \
+                              openjdk-17-jdk
 
-      - name: Set up Android SDK and NDK
+      - name: 🔧 Очистка кеша перед сборкой
         run: |
-          export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $ANDROID_SDK_ROOT
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-          cd $ANDROID_SDK_ROOT/cmdline-tools/latest
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools/* .
-          rm -rf cmdline-tools
-          rm commandlinetools-linux-11076708_latest.zip
-          ln -sfn $ANDROID_SDK_ROOT/cmdline-tools/latest $ANDROID_SDK_ROOT/tools
-          export PATH=$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.2.9519653"
+          rm -rf aclocal.m4 autom4te.cache config.h.in config.sub config.guess configure ltmain.sh || true
+          autoreconf --install --force
 
-      - name: Build APK
-        env:
-          JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
-          ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
-          ANDROID_NDK_HOME: $HOME/.buildozer/android/platform/android-sdk/ndk/25.2.9519653
+      - name: 🏗️ Установка Python-окружения
         run: |
-          export JAVA_HOME=/usr/lib/jvm/temurin-17-jdk-amd64
-          export ANDROID_NDK=$ANDROID_NDK_HOME
-          unset ANDROIDNDK
-          mkdir -p $HOME/.buildozer/android/platform/python-for-android
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install cython buildozer
+
+      - name: 🔽 Загрузка Android SDK, NDK и Buildozer
+        run: |
+          buildozer init
+          buildozer android clean
+          buildozer android update
+
+      - name: 🚀 Сборка APK через Buildozer
+        run: |
+          source venv/bin/activate
           buildozer -v android debug
 
-      - name: Upload APK
+      - name: 🏗️ Проверка наличия сгенерированного APK
+        run: |
+          ls -lh bin/ || echo "Файл APK не найден"
+
+      - name: 📤 Загрузка APK как артефакт
         uses: actions/upload-artifact@v4
         with:
-          name: MyApp-APK
+          name: my-app-apk
           path: bin/*.apk
+          retention-days: 7  # Хранить APK 7 дней
