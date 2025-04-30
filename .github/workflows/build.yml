@@ -25,7 +25,7 @@ jobs:
         docker run --rm -v ${{ github.workspace }}:/app kivy/buildozer buildozer android debug
 
     - name: 📦 Загрузка APK в артефакты
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: kivyapp-apk
         path: bin/*.apk
