@@ -1,6 +1,9 @@
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
+import json
+import os
+
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -165,41 +168,54 @@ ScreenManager:
             pos: self.pos
             size: self.size
             radius: [10,]
-    BoxLayout:
-        orientation: 'vertical'
-        spacing: 6
-        Label:
-            text: root.shortname if root.shortname else "Нет данных"
-            font_size: '18sp'
-            bold: True
-            color: (0, 0, 0, 1)
+    RelativeLayout:
         BoxLayout:
-            spacing: 5
+            orientation: 'vertical'
+            spacing: 6
+            padding: [0, 10, 0, 0]
             Label:
-                text: "Тикер: " + root.ticker
-                color: (0.2, 0.2, 0.2, 1)
+                text: root.shortname if root.shortname else "Нет данных"
+                font_size: '18sp'
+                bold: True
+                color: (0, 0, 0, 1)
+            BoxLayout:
+                spacing: 5
+                Label:
+                    text: "Тикер: " + root.ticker
+                    color: (0.2, 0.2, 0.2, 1)
+                Label:
+                    text: "Цена покупки: " + str(root.purchase_price)
+                    color: (0.2, 0.2, 0.2, 1)
+            BoxLayout:
+                spacing: 5
+                Label:
+                    text: "Количество: " + str(root.quantity)
+                    color: (0.2, 0.2, 0.2, 1)
+                Label:
+                    text: "Месячный доход: " + str(round(root.monthly_income, 2))
+                    color: (0.2, 0.2, 0.2, 1)
+            BoxLayout:
+                spacing: 5
+                Label:
+                    text: "Годовой доход: " + str(round(root.annual_income, 2))
+                    color: (0.2, 0.2, 0.2, 1)
+                Label:
+                    text: "Доходность к погашению: " + str(round(root.ytm, 2)) + "%"
+                    color: (0.2, 0.2, 0.2, 1)
             Label:
-                text: "Цена покупки: " + str(root.purchase_price)
+                text: "Дата погашения: " + root.matdate
                 color: (0.2, 0.2, 0.2, 1)
-        BoxLayout:
-            spacing: 5
-            Label:
-                text: "Количество: " + str(root.quantity)
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Месячный доход: " + str(round(root.monthly_income, 2))
-                color: (0.2, 0.2, 0.2, 1)
-        BoxLayout:
-            spacing: 5
-            Label:
-                text: "Годовой доход: " + str(round(root.annual_income, 2))
-                color: (0.2, 0.2, 0.2, 1)
-            Label:
-                text: "Доходность к погашению: " + str(round(root.ytm, 2)) + "%"
-                color: (0.2, 0.2, 0.2, 1)
-        Label:
-            text: "Дата погашения: " + root.matdate
-            color: (0.2, 0.2, 0.2, 1)
+
+        Button:
+            text: "X"
+            size_hint: None, None
+            size: '28dp', '28dp'
+            pos_hint: {'right': 1, 'top': 1}
+            background_color: (1, 0.3, 0.3, 1)
+            color: (1, 1, 1, 1)
+            font_size: '14sp'
+            on_release: app.remove_bond(root.ticker, root.purchase_date)
+
 '''
 
 # Определяем экраны
@@ -328,9 +344,31 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
 class BondsApp(App):
     def build(self):
         self.title = "Отслеживание доходности облигаций"
-        self.bonds = []  # Список для хранения облигаций
+        self.bonds = []
         self.sm = Builder.load_string(kv)
+        self.load_bonds()  # загружаем сохранённые облигации
+        self.update_bonds_view()  # отображаем их
         return self.sm
+
+    def get_save_file(self):
+        return os.path.join(self.user_data_dir, "bonds.json")
+
+    def save_bonds(self):
+        try:
+            with open(self.get_save_file(), "w", encoding="utf-8") as f:
+                json.dump(self.bonds, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print("Ошибка при сохранении облигаций:", e)
+
+    def load_bonds(self):
+        try:
+            filepath = self.get_save_file()
+            if os.path.exists(filepath):
+                with open(filepath, "r", encoding="utf-8") as f:
+                    self.bonds = json.load(f)
+        except Exception as e:
+            print("Ошибка при загрузке облигаций:", e)
+
 
     def add_bond(self):
         screen = self.sm.get_screen('add')
@@ -393,6 +431,7 @@ class BondsApp(App):
         }
         self.bonds.append(bond)
         self.update_bonds_view()
+        self.save_bonds()
 
         screen.ids.ticker_input.text = ""
         screen.ids.purchase_price_input.text = ""
@@ -422,6 +461,13 @@ class BondsApp(App):
                 ytm=bond['ytm']
             )
             bonds_list.add_widget(item)
+
+    def remove_bond(self, ticker, purchase_date):
+        # Удалим облигацию из списка
+        self.bonds = [b for b in self.bonds if not (b['ticker'] == ticker and b['purchase_date'] == purchase_date)]
+        self.save_bonds()
+        self.update_bonds_view()
+
 
 if __name__ == '__main__':
     BondsApp().run()
