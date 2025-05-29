@@ -191,28 +191,50 @@ ScreenManager:
                 Label:
                     text: "Тикер: " + root.ticker
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+
                 Label:
                     text: "Цена покупки: " + str(root.purchase_price)
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
             BoxLayout:
                 spacing: 5
                 Label:
                     text: "Количество: " + str(root.quantity)
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
                 Label:
                     text: "Месячный доход: " + str(round(root.monthly_income, 2))
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
             BoxLayout:
                 spacing: 5
                 Label:
                     text: "Годовой доход: " + str(round(root.annual_income, 2))
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
                 Label:
                     text: "Доходность к погашению: " + str(round(root.ytm, 2)) + "%"
                     color: (0.2, 0.2, 0.2, 1)
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
             Label:
                 text: "Дата погашения: " + root.matdate
                 color: (0.2, 0.2, 0.2, 1)
+                text_size: self.size
+                halign: 'left'
+                valign: 'middle'
 
         Button:
             text: "X"
@@ -351,6 +373,9 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
 
 class BondsApp(App):
     def build(self):
+        from kivy.core.window import Window
+        Window.softinput_mode = "pan"
+
         self.title = "Отслеживание доходности облигаций"
         self.bonds = []
         self.sm = Builder.load_string(kv)
