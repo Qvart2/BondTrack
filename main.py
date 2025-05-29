@@ -50,10 +50,10 @@ ScreenManager:
 
 <AddBondScreen>:
     name: 'add'
-    BoxLayout:
-        orientation: 'vertical'
+    AnchorLayout:
+        anchor_y: 'top'
         padding: 20
-        spacing: 15
+
         canvas.before:
             Color:
                 rgba: 0.95, 0.95, 0.95, 1
@@ -61,76 +61,61 @@ ScreenManager:
                 pos: self.pos
                 size: self.size
 
-        ScrollView:
-            do_scroll_x: False
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 15
+            size_hint_y: None
+            padding: [0, 40, 0, 0]
+            height: self.minimum_height
 
             BoxLayout:
-                orientation: 'vertical'
                 size_hint_y: None
-                height: self.minimum_height
+                height: '50dp'
                 spacing: 15
+                TextInput:
+                    id: ticker_input
+                    hint_text: "Введите тикер облигации"
+                    multiline: False
+                    size_hint_x: 0.4
+                TextInput:
+                    id: purchase_price_input
+                    hint_text: "Цена покупки"
+                    input_filter: 'float'
+                    multiline: False
+                    size_hint_x: 0.3
 
-                # Первая строка ввода: тикер и цена покупки
-                BoxLayout:
-                    size_hint_y: None
-                    height: '50dp'
-                    spacing: 15
-                    TextInput:
-                        id: ticker_input
-                        hint_text: "Введите тикер облигации"
-                        multiline: False
-                        size_hint_x: 0.4
-                        background_color: (1, 1, 1, 1)
-                        foreground_color: (0, 0, 0, 1)
-                        hint_text_color: (0.7, 0.7, 0.7, 1)
-                    TextInput:
-                        id: purchase_price_input
-                        hint_text: "Цена покупки"
-                        input_filter: 'float'
-                        multiline: False
-                        size_hint_x: 0.3
-                        background_color: (1, 1, 1, 1)
-                        foreground_color: (0, 0, 0, 1)
-                        hint_text_color: (0.7, 0.7, 0.7, 1)
+            BoxLayout:
+                size_hint_y: None
+                height: '50dp'
+                spacing: 15
+                TextInput:
+                    id: purchase_date_input
+                    hint_text: "Дата покупки (YYYY-MM-DD)"
+                    multiline: False
+                    size_hint_x: 0.5
+                TextInput:
+                    id: quantity_input
+                    hint_text: "Количество облигаций"
+                    input_filter: 'int'
+                    multiline: False
+                    size_hint_x: 0.5
 
-                # Вторая строка ввода: дата покупки и количество облигаций
-                BoxLayout:
-                    size_hint_y: None
-                    height: '50dp'
-                    spacing: 15
-                    TextInput:
-                        id: purchase_date_input
-                        hint_text: "Дата покупки (YYYY-MM-DD)"
-                        multiline: False
-                        size_hint_x: 0.5
-                        background_color: (1, 1, 1, 1)
-                        foreground_color: (0, 0, 0, 1)
-                        hint_text_color: (0.7, 0.7, 0.7, 1)
-                    TextInput:
-                        id: quantity_input
-                        hint_text: "Количество облигаций"
-                        input_filter: 'int'
-                        multiline: False
-                        size_hint_x: 0.5
-                        background_color: (1, 1, 1, 1)
-                        foreground_color: (0, 0, 0, 1)
-                        hint_text_color: (0.7, 0.7, 0.7, 1)
+            Button:
+                text: "Добавить облигацию"
+                size_hint_y: None
+                background_color: (0.2, 0.6, 0.8, 1)
+                color: (1, 1, 1, 1)
+                height: '50dp'
+                on_release:
+                    app.add_bond()
+                    root.manager.current = 'menu'
 
-                Button:
-                    text: "Добавить облигацию"
-                    size_hint_y: None
-                    height: '50dp'
-                    background_color: (0.2, 0.6, 0.8, 1)
-                    color: (1, 1, 1, 1)
-                    on_release:
-                        app.add_bond()
-                        root.manager.current = 'menu'
+            Button:
+                text: "Вернуться в меню"
+                size_hint_y: None
+                height: '50dp'
+                on_release: root.manager.current = 'menu'
 
-                Button:
-                    text: "Вернуться в меню"
-                    size_hint_y: None
-                    height: '50dp'
-                    on_release: root.manager.current = 'menu'
 
 <BondListScreen>:
     name: 'list'
@@ -373,9 +358,6 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
 
 class BondsApp(App):
     def build(self):
-        from kivy.core.window import Window
-        Window.softinput_mode = "pan"
-
         self.title = "Отслеживание доходности облигаций"
         self.bonds = []
         self.sm = Builder.load_string(kv)
