@@ -11,7 +11,6 @@ from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
 
-# Определяем дизайн приложения через Kivy Language
 kv = '''
 ScreenManager:
     MainMenu:
@@ -62,67 +61,76 @@ ScreenManager:
                 pos: self.pos
                 size: self.size
 
-        # Первая строка ввода: тикер и цена покупки
-        BoxLayout:
-            size_hint_y: None
-            height: '50dp'
-            spacing: 15
-            TextInput:
-                id: ticker_input
-                hint_text: "Введите тикер облигации"
-                multiline: False
-                size_hint_x: 0.4
-                background_color: (1, 1, 1, 1)
-                foreground_color: (0, 0, 0, 1)
-                hint_text_color: (0.7, 0.7, 0.7, 1)
-            TextInput:
-                id: purchase_price_input
-                hint_text: "Цена покупки"
-                input_filter: 'float'
-                multiline: False
-                size_hint_x: 0.3
-                background_color: (1, 1, 1, 1)
-                foreground_color: (0, 0, 0, 1)
-                hint_text_color: (0.7, 0.7, 0.7, 1)
+        ScrollView:
+            do_scroll_x: False
 
-        # Вторая строка ввода: дата покупки и количество облигаций
-        BoxLayout:
-            size_hint_y: None
-            height: '50dp'
-            spacing: 15
-            TextInput:
-                id: purchase_date_input
-                hint_text: "Дата покупки (YYYY-MM-DD)"
-                multiline: False
-                size_hint_x: 0.5
-                background_color: (1, 1, 1, 1)
-                foreground_color: (0, 0, 0, 1)
-                hint_text_color: (0.7, 0.7, 0.7, 1)
-            TextInput:
-                id: quantity_input
-                hint_text: "Количество облигаций"
-                input_filter: 'int'
-                multiline: False
-                size_hint_x: 0.5
-                background_color: (1, 1, 1, 1)
-                foreground_color: (0, 0, 0, 1)
-                hint_text_color: (0.7, 0.7, 0.7, 1)
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 15
 
-        Button:
-            text: "Добавить облигацию"
-            size_hint_y: None
-            height: '50dp'
-            background_color: (0.2, 0.6, 0.8, 1)
-            color: (1, 1, 1, 1)
-            on_release:
-                app.add_bond()
-                root.manager.current = 'menu'
+                # Первая строка ввода: тикер и цена покупки
+                BoxLayout:
+                    size_hint_y: None
+                    height: '50dp'
+                    spacing: 15
+                    TextInput:
+                        id: ticker_input
+                        hint_text: "Введите тикер облигации"
+                        multiline: False
+                        size_hint_x: 0.4
+                        background_color: (1, 1, 1, 1)
+                        foreground_color: (0, 0, 0, 1)
+                        hint_text_color: (0.7, 0.7, 0.7, 1)
+                    TextInput:
+                        id: purchase_price_input
+                        hint_text: "Цена покупки"
+                        input_filter: 'float'
+                        multiline: False
+                        size_hint_x: 0.3
+                        background_color: (1, 1, 1, 1)
+                        foreground_color: (0, 0, 0, 1)
+                        hint_text_color: (0.7, 0.7, 0.7, 1)
 
-        Button:
-            text: "Вернуться в меню"
-            size_hint_y: None
-            height: '50dp'
-            on_release: root.manager.current = 'menu'
+                # Вторая строка ввода: дата покупки и количество облигаций
+                BoxLayout:
+                    size_hint_y: None
+                    height: '50dp'
+                    spacing: 15
+                    TextInput:
+                        id: purchase_date_input
+                        hint_text: "Дата покупки (YYYY-MM-DD)"
+                        multiline: False
+                        size_hint_x: 0.5
+                        background_color: (1, 1, 1, 1)
+                        foreground_color: (0, 0, 0, 1)
+                        hint_text_color: (0.7, 0.7, 0.7, 1)
+                    TextInput:
+                        id: quantity_input
+                        hint_text: "Количество облигаций"
+                        input_filter: 'int'
+                        multiline: False
+                        size_hint_x: 0.5
+                        background_color: (1, 1, 1, 1)
+                        foreground_color: (0, 0, 0, 1)
+                        hint_text_color: (0.7, 0.7, 0.7, 1)
+
+                Button:
+                    text: "Добавить облигацию"
+                    size_hint_y: None
+                    height: '50dp'
+                    background_color: (0.2, 0.6, 0.8, 1)
+                    color: (1, 1, 1, 1)
+                    on_release:
+                        app.add_bond()
+                        root.manager.current = 'menu'
+
+                Button:
+                    text: "Вернуться в меню"
+                    size_hint_y: None
+                    height: '50dp'
+                    on_release: root.manager.current = 'menu'
 
 <BondListScreen>:
     name: 'list'

@@ -106,6 +106,9 @@ android.permissions = android.permission.INTERNET, (name=android.permission.WRIT
 # (int) Minimum API your APK / AAB will support.
 #android.minapi = 21
 
+# Ensure the layout resizes when the keyboard appears
+android.windowSoftInputMode = adjustResize
+
 # (int) Android SDK version to use
 #android.sdk = 20
 
