@@ -129,6 +129,21 @@ ScreenManager:
             Rectangle:
                 pos: self.pos
                 size: self.size
+
+        # 🔽 Новый блок для отображения суммарной доходности
+        BoxLayout:
+            size_hint_y: None
+            height: '60dp'
+            spacing: 10
+            Label:
+                id: total_monthly
+                text: "Суммарный месячный доход: 0"
+                color: (0, 0, 0, 1)
+            Label:
+                id: total_annual
+                text: "Суммарный годовой доход: 0"
+                color: (0, 0, 0, 1)
+
         Label:
             text: "Список облигаций:"
             size_hint_y: None
@@ -136,6 +151,7 @@ ScreenManager:
             font_size: '18sp'
             bold: True
             color: (0, 0, 0, 1)
+
         ScrollView:
             BoxLayout:
                 id: bonds_list
