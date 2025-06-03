@@ -470,9 +470,17 @@ class BondsApp(App):
         screen.ids.quantity_input.text = ""
 
     def update_bonds_view(self):
-        bonds_list = self.sm.get_screen('list').ids.bonds_list
+        screen = self.sm.get_screen('list')
+        bonds_list = screen.ids.bonds_list
         bonds_list.clear_widgets()
+
+        total_monthly = 0
+        total_annual = 0
+
         for bond in self.bonds:
+            total_monthly += bond.get('monthly_income', 0)
+            total_annual += bond.get('annual_income', 0)
+
             item = BondItem(
                 ticker=bond['ticker'],
                 purchase_price=bond['purchase_price'],
@@ -492,6 +500,11 @@ class BondsApp(App):
                 ytm=bond['ytm']
             )
             bonds_list.add_widget(item)
+
+        # Обновляем суммы на экране
+        screen.ids.total_monthly.text = f"Суммарный месячный доход: {round(total_monthly, 2)}"
+        screen.ids.total_annual.text = f"Суммарный годовой доход: {round(total_annual, 2)}"
+
 
     def remove_bond(self, ticker, purchase_date):
         # Удалим облигацию из списка
