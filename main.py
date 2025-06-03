@@ -139,10 +139,16 @@ ScreenManager:
                 id: total_monthly
                 text: "Суммарный месячный доход: 0"
                 color: (0, 0, 0, 1)
+                text_size: self.size
+                halign: 'left'
+                valign: 'middle'
             Label:
                 id: total_annual
                 text: "Суммарный годовой доход: 0"
                 color: (0, 0, 0, 1)
+                text_size: self.size
+                halign: 'right'
+                valign: 'middle'
 
         Label:
             text: "Список облигаций:"
