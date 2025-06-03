@@ -353,15 +353,21 @@ def get_marketdata_last(board, ticker):
     return 0
 
 # Функция расчёта доходности (на одну облигацию)
-def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue):
-    if coupon_value > 0:
-        annual_income = coupon_value
-    elif coupon_percent > 0 and facevalue > 0:
-        annual_income = facevalue * coupon_percent / 100
-    else:
-        annual_income = purchase_price * coupon_percent / 100
-    monthly_income = annual_income / 12
-    return monthly_income, annual_income
+def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue, quantity):
+    try:
+        if coupon_value > 0:
+            annual_income = coupon_value * quantity
+        elif coupon_percent > 0 and facevalue > 0:
+            annual_income = facevalue * (coupon_percent / 100) * quantity
+        else:
+            annual_income = purchase_price * (coupon_percent / 100) * quantity
+
+        monthly_income = annual_income / 12
+        return round(monthly_income, 2), round(annual_income, 2)
+    except Exception as e:
+        print(f"Ошибка при расчёте доходности: {e}")
+        return 0, 0
+
 
 # Функция расчёта доходности к погашению (YTM) по приблизительной формуле
 def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturity_date):
@@ -440,7 +446,7 @@ class BondsApp(App):
         offerdate = securities_data.get("OFFERDATE", "нет оферты")
 
         # Расчёт доходности для одной облигации
-        monthly_income, annual_income = calculate_income(purchase_price, coupon_value, coupon_percent, facevalue)
+        monthly_income, annual_income = calculate_income(purchase_price, coupon_value, coupon_percent, facevalue, quantity)
         # Итоговый доход с учётом количества облигаций
         total_monthly_income = monthly_income * quantity
         total_annual_income = annual_income * quantity
