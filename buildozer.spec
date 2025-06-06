@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = My Application
+title = BondTrack
 
 # (str) Package name
 package.name = myapp
@@ -13,7 +13,9 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,mp3
+
+source.include_dirs = sounds
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -22,7 +24,7 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-#source.exclude_dirs = tests, bin, venv
+source.exclude_dirs = tests, bin, venv
 
 # (list) List of exclusions using pattern matching
 # Do not prefix with './'
@@ -105,9 +107,6 @@ android.permissions = android.permission.INTERNET, (name=android.permission.WRIT
 
 # (int) Minimum API your APK / AAB will support.
 #android.minapi = 21
-
-# Ensure the layout resizes when the keyboard appears
-android.windowSoftInputMode = adjustResize
 
 # (int) Android SDK version to use
 #android.sdk = 20

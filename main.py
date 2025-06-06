@@ -14,6 +14,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.properties import BooleanProperty, ListProperty
+from kivy.core.audio import SoundLoader
 
 kv = '''
 ScreenManager:
@@ -450,6 +451,11 @@ class BondsApp(App):
             self.bg_color = [0.95, 0.95, 0.95, 1]
             self.text_color = [0, 0, 0, 1]
 
+    def play_sound(self, name):
+        sound_path = os.path.join(os.path.dirname(__file__), "sounds", f"{name}.mp3")
+        sound = SoundLoader.load(sound_path)
+        if sound:
+            sound.play()
 
     def build(self):
         self.title = "Отслеживание доходности облигаций"
@@ -605,6 +611,7 @@ class BondsApp(App):
         self.update_bonds_view()
         self.save_bonds()
 
+        self.play_sound("click")
         self.show_info("Облигация успешно добавлена!")
 
         screen.ids.ticker_input.text = ""
