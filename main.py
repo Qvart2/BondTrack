@@ -53,6 +53,18 @@ ScreenManager:
                 active: app.dark_theme
                 on_active: app.toggle_theme(self.active)
 
+        BoxLayout:
+            spacing: 10
+            size_hint_y: None
+            height: '50dp'
+            Label:
+                text: "Звук"
+                color: app.text_color
+            Switch:
+                id: sound_switch
+                active: app.sound_enabled
+                on_active: app.sound_enabled = self.active
+
         Button:
             text: "Назад"
             size_hint_y: None
@@ -439,6 +451,7 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
 
 class BondsApp(App):
     dark_theme = BooleanProperty(False)
+    sound_enabled = BooleanProperty(True)
     bg_color = ListProperty([0.95, 0.95, 0.95, 1])  # светлая по умолчанию
     text_color = ListProperty([0, 0, 0, 1])
 
@@ -452,10 +465,13 @@ class BondsApp(App):
             self.text_color = [0, 0, 0, 1]
 
     def play_sound(self, name):
+        if not self.sound_enabled:
+            return
         sound_path = os.path.join(os.path.dirname(__file__), "sounds", f"{name}.mp3")
         sound = SoundLoader.load(sound_path)
         if sound:
             sound.play()
+
 
     def build(self):
         self.title = "Отслеживание доходности облигаций"
