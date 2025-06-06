@@ -179,7 +179,6 @@ ScreenManager:
                 pos: self.pos
                 size: self.size
 
-        # 🔽 Новый блок для отображения суммарной доходности
         BoxLayout:
             size_hint_y: None
             height: '60dp'
@@ -330,7 +329,7 @@ class BondItem(BoxLayout):
     accrued_interest = NumericProperty(0)
     last_price = NumericProperty(0)
     facevalue = NumericProperty(0)
-    matdate = StringProperty('')    # Дата погашения
+    matdate = StringProperty('')
     offerdate = StringProperty('')
     monthly_income = NumericProperty(0)
     annual_income = NumericProperty(0)
@@ -627,7 +626,6 @@ class BondsApp(App):
 
 
     def remove_bond(self, ticker, purchase_date):
-        # Удалим облигацию из списка
         self.bonds = [b for b in self.bonds if not (b['ticker'] == ticker and b['purchase_date'] == purchase_date)]
         self.save_bonds()
         self.update_bonds_view()
