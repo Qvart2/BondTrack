@@ -478,13 +478,30 @@ class BondsApp(App):
 
     def show_info(self, message):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        label = Label(text=message)
+
+        label = Label(
+            text=message,
+            halign='center',
+            valign='middle'
+        )
+        # Привязываем ширину текста к ширине Label для переноса строк
+        label.bind(
+            width=lambda instance, value: setattr(instance, 'text_size', (value, None))
+        )
+
         close_btn = Button(text='Ок', size_hint=(1, 0.3))
         box.add_widget(label)
         box.add_widget(close_btn)
-        popup = Popup(title='Успех', content=box, size_hint=(0.6, 0.3))
+
+        popup = Popup(
+            title='Успех',
+            content=box,
+            size_hint=(0.6, 0.3),
+            auto_dismiss=False
+        )
         close_btn.bind(on_release=popup.dismiss)
         popup.open()
+
 
 
     def get_save_file(self):
