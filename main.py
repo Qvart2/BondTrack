@@ -13,12 +13,50 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.properties import BooleanProperty, ListProperty
 
 kv = '''
 ScreenManager:
     MainMenu:
     AddBondScreen:
     BondListScreen:
+    SettingsScreen:
+
+<SettingsScreen>:
+    name: 'settings'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        canvas.before:
+            Color:
+                rgba: app.bg_color
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Настройки"
+            font_size: '24sp'
+            color: app.text_color
+
+        BoxLayout:
+            spacing: 10
+            size_hint_y: None
+            height: '50dp'
+            Label:
+                text: "Тёмная тема"
+                color: app.text_color
+            Switch:
+                id: theme_switch
+                active: app.dark_theme
+                on_active: app.toggle_theme(self.active)
+
+        Button:
+            text: "Назад"
+            size_hint_y: None
+            height: '50dp'
+            on_release: root.manager.current = 'menu'
 
 <MainMenu>:
     name: 'menu'
@@ -28,14 +66,14 @@ ScreenManager:
         spacing: 20
         canvas.before:
             Color:
-                rgba: 0.95, 0.95, 0.95, 1
+                rgba: app.bg_color
             Rectangle:
                 pos: self.pos
                 size: self.size
         Label:
             text: 'Главное меню'
             font_size: '24sp'
-            color: (0, 0, 0, 1)
+            color: app.text_color
         Button:
             text: 'Добавить облигацию'
             size_hint_y: None
@@ -50,6 +88,14 @@ ScreenManager:
             background_color: (0.2, 0.6, 0.8, 1)
             color: (1, 1, 1, 1)
             on_release: root.manager.current = 'list'
+        Button:
+            text: 'Настройки'
+            size_hint_y: None
+            height: '50dp'
+            background_color: (0.2, 0.6, 0.8, 1)
+            color: (1, 1, 1, 1)
+            on_release: root.manager.current = 'settings'
+
 
 <AddBondScreen>:
     name: 'add'
@@ -59,7 +105,7 @@ ScreenManager:
 
         canvas.before:
             Color:
-                rgba: 0.95, 0.95, 0.95, 1
+                rgba: app.bg_color
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -128,7 +174,7 @@ ScreenManager:
         spacing: 15
         canvas.before:
             Color:
-                rgba: 0.95, 0.95, 0.95, 1
+                rgba: app.bg_color
             Rectangle:
                 pos: self.pos
                 size: self.size
@@ -141,14 +187,14 @@ ScreenManager:
             Label:
                 id: total_monthly
                 text: "Суммарный месячный доход: 0"
-                color: (0, 0, 0, 1)
+                color: app.text_color
                 text_size: self.size
                 halign: 'left'
                 valign: 'middle'
             Label:
                 id: total_annual
                 text: "Суммарный годовой доход: 0"
-                color: (0, 0, 0, 1)
+                color: app.text_color
                 text_size: self.size
                 halign: 'right'
                 valign: 'middle'
@@ -159,7 +205,7 @@ ScreenManager:
             height: '40dp'
             font_size: '18sp'
             bold: True
-            color: (0, 0, 0, 1)
+            color: app.text_color
 
         ScrollView:
             BoxLayout:
@@ -181,7 +227,7 @@ ScreenManager:
     padding: 10
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: app.bg_color
         RoundedRectangle:
             pos: self.pos
             size: self.size
@@ -195,19 +241,19 @@ ScreenManager:
                 text: root.shortname if root.shortname else "Нет данных"
                 font_size: '18sp'
                 bold: True
-                color: (0, 0, 0, 1)
+                color: app.text_color
             BoxLayout:
                 spacing: 5
                 Label:
                     text: "Тикер: " + root.ticker
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
 
                 Label:
                     text: "Цена покупки: " + str(root.purchase_price)
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
@@ -215,13 +261,13 @@ ScreenManager:
                 spacing: 5
                 Label:
                     text: "Количество: " + str(root.quantity)
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
                 Label:
                     text: "Месячный доход: " + str(round(root.monthly_income, 2))
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
@@ -229,19 +275,19 @@ ScreenManager:
                 spacing: 5
                 Label:
                     text: "Годовой доход: " + str(round(root.annual_income, 2))
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
                 Label:
                     text: "Доходность к погашению: " + str(round(root.ytm, 2)) + "%"
-                    color: (0.2, 0.2, 0.2, 1)
+                    color: app.text_color
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
             Label:
                 text: "Дата погашения: " + root.matdate
-                color: (0.2, 0.2, 0.2, 1)
+                color: app.text_color
                 text_size: self.size
                 halign: 'left'
                 valign: 'middle'
@@ -267,6 +313,10 @@ class AddBondScreen(Screen):
 
 class BondListScreen(Screen):
     pass
+
+class SettingsScreen(Screen):
+    pass
+
 
 # Виджет для отображения одной облигации с дополнительными данными
 class BondItem(BoxLayout):
@@ -388,6 +438,20 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
         return 0
 
 class BondsApp(App):
+    dark_theme = BooleanProperty(False)
+    bg_color = ListProperty([0.95, 0.95, 0.95, 1])  # светлая по умолчанию
+    text_color = ListProperty([0, 0, 0, 1])
+
+    def toggle_theme(self, is_dark):
+        self.dark_theme = is_dark
+        if is_dark:
+            self.bg_color = [0.15, 0.15, 0.17, 1]
+            self.text_color = [1, 1, 1, 1]
+        else:
+            self.bg_color = [0.95, 0.95, 0.95, 1]
+            self.text_color = [0, 0, 0, 1]
+
+
     def build(self):
         self.title = "Отслеживание доходности облигаций"
         self.bonds = []
