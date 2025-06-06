@@ -455,8 +455,8 @@ class BondsApp(App):
         self.title = "Отслеживание доходности облигаций"
         self.bonds = []
         self.sm = Builder.load_string(kv)
-        self.load_bonds()  # загружаем сохранённые облигации
-        self.update_bonds_view()  # отображаем их
+        self.load_bonds()
+        self.update_bonds_view()
         return self.sm
 
     def show_error(self, message):
