@@ -10,6 +10,9 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.uix.button import Button
 
 kv = '''
 ScreenManager:
@@ -393,6 +396,27 @@ class BondsApp(App):
         self.update_bonds_view()  # отображаем их
         return self.sm
 
+    def show_error(self, message):
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        label = Label(text=message)
+        close_btn = Button(text='Закрыть', size_hint=(1, 0.3))
+        box.add_widget(label)
+        box.add_widget(close_btn)
+        popup = Popup(title='Ошибка', content=box, size_hint=(0.8, 0.3))
+        close_btn.bind(on_release=popup.dismiss)
+        popup.open()
+
+    def show_info(self, message):
+        box = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        label = Label(text=message)
+        close_btn = Button(text='Ок', size_hint=(1, 0.3))
+        box.add_widget(label)
+        box.add_widget(close_btn)
+        popup = Popup(title='Успех', content=box, size_hint=(0.6, 0.3))
+        close_btn.bind(on_release=popup.dismiss)
+        popup.open()
+
+
     def get_save_file(self):
         return os.path.join(self.user_data_dir, "bonds.json")
 
@@ -419,20 +443,38 @@ class BondsApp(App):
         purchase_price_text = screen.ids.purchase_price_input.text.strip()
         purchase_date = screen.ids.purchase_date_input.text.strip()
         quantity_text = screen.ids.quantity_input.text.strip()
+        # Подсветка незаполненных полей
+        screen.ids.ticker_input.background_color = (1, 1, 1, 1)
+        screen.ids.purchase_price_input.background_color = (1, 1, 1, 1)
+        screen.ids.purchase_date_input.background_color = (1, 1, 1, 1)
+        screen.ids.quantity_input.background_color = (1, 1, 1, 1)
+
         if not ticker or not purchase_price_text or not purchase_date or not quantity_text:
-            print("Не заполнены обязательные поля: тикер, цена покупки, дата покупки и количество.")
+            if not ticker:
+                screen.ids.ticker_input.background_color = (1, 0.7, 0.7, 1)
+            if not purchase_price_text:
+                screen.ids.purchase_price_input.background_color = (1, 0.7, 0.7, 1)
+            if not purchase_date:
+                screen.ids.purchase_date_input.background_color = (1, 0.7, 0.7, 1)
+            if not quantity_text:
+                screen.ids.quantity_input.background_color = (1, 0.7, 0.7, 1)
+
+            self.show_error("Заполните все поля: тикер, цена покупки, дата покупки и количество.")
             return
+
         try:
             purchase_price = float(purchase_price_text)
             quantity = int(quantity_text)
         except Exception as e:
-            print("Неверный формат цены покупки или количества.")
+            self.show_error("Неверный формат цены покупки или количества.")
             return
+
 
         board_id = get_board_id(ticker)
         if not board_id:
-            print("Не удалось получить BOARDID для тикера:", ticker)
+            self.show_error(f"Не удалось получить BOARDID для тикера: {ticker}")
             return
+
 
         securities_data = get_securities_data(board_id, ticker)
         last_price = get_marketdata_last(board_id, ticker)
@@ -475,6 +517,8 @@ class BondsApp(App):
         self.bonds.append(bond)
         self.update_bonds_view()
         self.save_bonds()
+
+        self.show_info("Облигация успешно добавлена!")
 
         screen.ids.ticker_input.text = ""
         screen.ids.purchase_price_input.text = ""
