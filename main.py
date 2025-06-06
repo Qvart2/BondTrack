@@ -461,7 +461,14 @@ class BondsApp(App):
 
     def show_error(self, message):
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        label = Label(text=message)
+        label = Label(
+            text=message,
+            halign='center',
+            valign='middle'
+        )
+        label.bind(
+            width=lambda instance, value: setattr(instance, 'text_size', (value, None))
+        )
         close_btn = Button(text='Закрыть', size_hint=(1, 0.3))
         box.add_widget(label)
         box.add_widget(close_btn)
