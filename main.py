@@ -297,12 +297,19 @@ ScreenManager:
                     text_size: self.size
                     halign: 'left'
                     valign: 'middle'
-            Label:
-                text: "Дата погашения: " + root.matdate
-                color: app.text_color
-                text_size: self.size
-                halign: 'left'
-                valign: 'middle'
+            BoxLayout:
+                Label:
+                    text: "Дата погашения: " + root.matdate
+                    color: app.text_color
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
+                Label:
+                    text: "Оферта: " + root.offerdate
+                    color: app.text_color
+                    text_size: self.size
+                    halign: 'left'
+                    valign: 'middle'
 
         Button:
             text: "X"
@@ -455,6 +462,15 @@ class BondsApp(App):
     bg_color = ListProperty([0.95, 0.95, 0.95, 1])  # светлая по умолчанию
     text_color = ListProperty([0, 0, 0, 1])
 
+    def format_date(self, raw_date):
+        try:
+            if raw_date and len(raw_date) == 10:  # формат YYYY-MM-DD
+                dt = datetime.strptime(raw_date, "%Y-%m-%d")
+                return dt.strftime("%d.%m.%Y")
+        except:
+            pass
+        return raw_date or "Не указана"
+
     def toggle_theme(self, is_dark):
         self.dark_theme = is_dark
         if is_dark:
@@ -482,6 +498,7 @@ class BondsApp(App):
         return self.sm
 
     def show_error(self, message):
+        self.play_sound("error")
         box = BoxLayout(orientation='vertical', padding=10, spacing=10)
         label = Label(
             text=message,
@@ -557,6 +574,12 @@ class BondsApp(App):
         screen.ids.purchase_price_input.background_color = (1, 1, 1, 1)
         screen.ids.purchase_date_input.background_color = (1, 1, 1, 1)
         screen.ids.quantity_input.background_color = (1, 1, 1, 1)
+        
+        try:
+            datetime.strptime(purchase_date, "%Y-%m-%d")
+        except ValueError:
+            self.show_error("Неверный формат даты. Используйте YYYY-MM-DD.")
+            return
 
         if not ticker or not purchase_price_text or not purchase_date or not quantity_text:
             if not ticker:
@@ -640,12 +663,32 @@ class BondsApp(App):
         bonds_list = screen.ids.bonds_list
         bonds_list.clear_widgets()
 
+        if not self.bonds:
+            empty_label = Label(
+                text="Нет добавленных облигаций.",
+                size_hint_y=None,
+                height='40dp',
+                color=self.text_color,
+                halign='center',
+                valign='middle'
+            )
+            empty_label.bind(width=lambda inst, val: setattr(inst, 'text_size', (val, None)))
+            bonds_list.add_widget(empty_label)
+
         total_monthly = 0
         total_annual = 0
 
         for bond in self.bonds:
             total_monthly += bond.get('monthly_income', 0)
             total_annual += bond.get('annual_income', 0)
+
+            # Обработка оферты
+            matdate = self.format_date(bond.get('matdate', ''))
+            offer = bond.get('offerdate', '')
+            if not offer or offer.lower() in ['нет', 'нет оферты', 'n/a', '-']:
+                offer = 'Не предусмотрена'
+            else:
+                offer = self.format_date(offer)
 
             item = BondItem(
                 ticker=bond['ticker'],
@@ -659,7 +702,7 @@ class BondsApp(App):
                 last_price=bond['last_price'],
                 facevalue=bond['facevalue'],
                 matdate=bond['matdate'],
-                offerdate=bond['offerdate'],
+                offerdate=offer,
                 monthly_income=bond['monthly_income'],
                 annual_income=bond['annual_income'],
                 quantity=bond['quantity'],
@@ -667,12 +710,14 @@ class BondsApp(App):
             )
             bonds_list.add_widget(item)
 
+
         # Обновляем суммы на экране
         screen.ids.total_monthly.text = f"Суммарный месячный доход: {round(total_monthly, 2)}"
         screen.ids.total_annual.text = f"Суммарный годовой доход: {round(total_annual, 2)}"
 
 
     def remove_bond(self, ticker, purchase_date):
+        self.play_sound("bond_delete")
         self.bonds = [b for b in self.bonds if not (b['ticker'] == ticker and b['purchase_date'] == purchase_date)]
         self.save_bonds()
         self.update_bonds_view()
