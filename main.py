@@ -360,16 +360,19 @@ class BondItem(BoxLayout):
 def get_board_id(ticker):
     url = f"https://iss.moex.com/iss/engines/stock/markets/bonds/securities/{ticker}/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=BOARDID"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         if response.status_code == 200:
             root = ET.fromstring(response.content)
             row = root.find(".//row")
             if row is not None:
                 board_id = row.attrib.get("BOARDID", "")
                 return board_id
-    except Exception as e:
-        print(f"Ошибка при получении BOARDID: {e}")
+    except requests.exceptions.ConnectionError:
+        App.get_running_app().show_error("Нет подключения к интернету. Проверьте соединение.")
+    except Exception:
+        App.get_running_app().show_error("Ошибка при получении данных с сервера MOEX.")
     return ""
+
 
 # Функция для получения данных из блока securities
 def get_securities_data(board, ticker):
@@ -402,9 +405,12 @@ def get_securities_data(board, ticker):
                     data["FACEVALUE"] = 0
                 data["MATDATE"] = row.attrib.get("MATDATE", "")
                 data["OFFERDATE"] = row.attrib.get("OFFERDATE", "нет оферты")
+    except requests.exceptions.ConnectionError:
+        App.get_running_app().show_error("Не удалось загрузить данные о бумаге. Нет соединения с интернетом.")
+        return data
     except Exception as e:
-        print(f"Ошибка при получении securities данных: {e}")
-    return data
+        App.get_running_app().show_error("Сервер биржи не отвечает. Повторите попытку позже.")
+        return data
 
 # Функция для получения рыночной цены (LAST)
 def get_marketdata_last(board, ticker):
