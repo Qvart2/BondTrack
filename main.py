@@ -412,6 +412,8 @@ def get_securities_data(board, ticker):
         App.get_running_app().show_error("Сервер биржи не отвечает. Повторите попытку позже.")
         return data
 
+    return data
+
 # Функция для получения рыночной цены (LAST)
 def get_marketdata_last(board, ticker):
     url = (f"https://iss.moex.com/iss/engines/stock/markets/bonds/boards/{board}/securities/{ticker}/securities.xml"
