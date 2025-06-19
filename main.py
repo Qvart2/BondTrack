@@ -323,7 +323,6 @@ ScreenManager:
 
 '''
 
-# Определяем экраны
 class MainMenu(Screen):
     pass
 
@@ -337,7 +336,6 @@ class SettingsScreen(Screen):
     pass
 
 
-# Виджет для отображения одной облигации с дополнительными данными
 class BondItem(BoxLayout):
     ticker = StringProperty('')
     purchase_price = NumericProperty(0)
@@ -356,7 +354,6 @@ class BondItem(BoxLayout):
     quantity = NumericProperty(0)
     ytm = NumericProperty(0)
 
-# Функция для получения BOARDID по тикеру (режим торгов)
 def get_board_id(ticker):
     url = f"https://iss.moex.com/iss/engines/stock/markets/bonds/securities/{ticker}/securities.xml?iss.meta=off&iss.only=marketdata&marketdata.columns=BOARDID"
     try:
@@ -374,7 +371,6 @@ def get_board_id(ticker):
     return ""
 
 
-# Функция для получения данных из блока securities
 def get_securities_data(board, ticker):
     url = (f"https://iss.moex.com/iss/engines/stock/markets/bonds/boards/{board}/securities/{ticker}/securities.xml"
            "?iss.meta=off&iss.only=securities&securities.columns=SHORTNAME,COUPONPERCENT,COUPONVALUE,ACCRUEDINT,FACEVALUE,MATDATE,OFFERDATE")
@@ -414,7 +410,6 @@ def get_securities_data(board, ticker):
 
     return data
 
-# Функция для получения рыночной цены (LAST)
 def get_marketdata_last(board, ticker):
     url = (f"https://iss.moex.com/iss/engines/stock/markets/bonds/boards/{board}/securities/{ticker}/securities.xml"
            "?iss.meta=off&iss.only=marketdata&marketdata.columns=LAST")
@@ -432,7 +427,6 @@ def get_marketdata_last(board, ticker):
         print(f"Ошибка при получении LAST цены: {e}")
     return 0
 
-# Функция расчёта доходности (на одну облигацию)
 def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue, quantity):
     try:
         if coupon_value > 0:
@@ -449,7 +443,6 @@ def calculate_income(purchase_price, coupon_value, coupon_percent, facevalue, qu
         return 0, 0
 
 
-# Функция расчёта доходности к погашению (YTM) по приблизительной формуле
 def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturity_date):
     try:
         purchase_dt = datetime.strptime(purchase_date, "%Y-%m-%d")
@@ -457,9 +450,8 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
         years_to_maturity = (maturity_dt - purchase_dt).days / 365.25
         if years_to_maturity <= 0:
             return 0
-        # Приблизительная формула YTM:
         ytm = (coupon_value + (facevalue - purchase_price) / years_to_maturity) / ((facevalue + purchase_price) / 2)
-        return ytm * 100  # в процентах
+        return ytm * 100
     except Exception as e:
         print("Ошибка при расчёте YTM:", e)
         return 0
@@ -467,12 +459,12 @@ def calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, maturi
 class BondsApp(App):
     dark_theme = BooleanProperty(False)
     sound_enabled = BooleanProperty(True)
-    bg_color = ListProperty([0.95, 0.95, 0.95, 1])  # светлая по умолчанию
+    bg_color = ListProperty([0.95, 0.95, 0.95, 1])
     text_color = ListProperty([0, 0, 0, 1])
 
     def format_date(self, raw_date):
         try:
-            if raw_date and len(raw_date) == 10:  # формат YYYY-MM-DD
+            if raw_date and len(raw_date) == 10:
                 dt = datetime.strptime(raw_date, "%Y-%m-%d")
                 return dt.strftime("%d.%m.%Y")
         except:
@@ -531,7 +523,6 @@ class BondsApp(App):
             halign='center',
             valign='middle'
         )
-        # Привязываем ширину текста к ширине Label для переноса строк
         label.bind(
             width=lambda instance, value: setattr(instance, 'text_size', (value, None))
         )
@@ -577,7 +568,6 @@ class BondsApp(App):
         purchase_price_text = screen.ids.purchase_price_input.text.strip()
         purchase_date = screen.ids.purchase_date_input.text.strip()
         quantity_text = screen.ids.quantity_input.text.strip()
-        # Подсветка незаполненных полей
         screen.ids.ticker_input.background_color = (1, 1, 1, 1)
         screen.ids.purchase_price_input.background_color = (1, 1, 1, 1)
         screen.ids.purchase_date_input.background_color = (1, 1, 1, 1)
@@ -627,13 +617,10 @@ class BondsApp(App):
         matdate = securities_data.get("MATDATE", "")  # Дата погашения
         offerdate = securities_data.get("OFFERDATE", "нет оферты")
 
-        # Расчёт доходности для одной облигации
         monthly_income, annual_income = calculate_income(purchase_price, coupon_value, coupon_percent, facevalue, quantity)
-        # Итоговый доход с учётом количества облигаций
         total_monthly_income = monthly_income * quantity
         total_annual_income = annual_income * quantity
 
-        # Расчёт доходности к погашению (если задана дата погашения)
         ytm = calculate_ytm(purchase_price, coupon_value, facevalue, purchase_date, matdate) if matdate else 0
 
         bond = {
@@ -690,7 +677,6 @@ class BondsApp(App):
             total_monthly += bond.get('monthly_income', 0)
             total_annual += bond.get('annual_income', 0)
 
-            # Обработка оферты
             matdate = self.format_date(bond.get('matdate', ''))
             offer = bond.get('offerdate', '')
             if not offer or offer.lower() in ['нет', 'нет оферты', 'n/a', '-']:
@@ -718,18 +704,14 @@ class BondsApp(App):
             )
             bonds_list.add_widget(item)
 
-
-        # Обновляем суммы на экране
         screen.ids.total_monthly.text = f"Суммарный месячный доход: {round(total_monthly, 2)}"
         screen.ids.total_annual.text = f"Суммарный годовой доход: {round(total_annual, 2)}"
-
 
     def remove_bond(self, ticker, purchase_date):
         self.play_sound("bond_delete")
         self.bonds = [b for b in self.bonds if not (b['ticker'] == ticker and b['purchase_date'] == purchase_date)]
         self.save_bonds()
         self.update_bonds_view()
-
 
 if __name__ == '__main__':
     BondsApp().run()
