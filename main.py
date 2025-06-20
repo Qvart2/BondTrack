@@ -416,6 +416,49 @@ def get_board_id(ticker):
         App.get_running_app().show_error("Ошибка при получении данных с сервера MOEX.")
     return ""
 
+def fetch_filtered_bonds(limit=10):
+    url = "https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities.xml?iss.meta=off&iss.only=securities&securities.columns=SECID,SHORTNAME,COUPONPERCENT,COUPONVALUE,MATDATE"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            return []
+        root = ET.fromstring(response.content)
+        rows = root.findall(".//row")
+
+        suitable_bonds = []
+        today = datetime.now()
+
+        for row in rows:
+            try:
+                secid = row.attrib.get("SECID")
+                shortname = row.attrib.get("SHORTNAME", secid)
+                coupon_percent = float(row.attrib.get("COUPONPERCENT", 0))
+                coupon_value = float(row.attrib.get("COUPONVALUE", 0))
+                matdate_raw = row.attrib.get("MATDATE", "")
+                if not secid or coupon_percent <= 0 or not matdate_raw:
+                    continue
+                matdate = datetime.strptime(matdate_raw, "%Y-%m-%d")
+                years_left = (matdate - today).days / 365.25
+
+                if years_left >= 1:
+                    suitable_bonds.append({
+                        "ticker": secid,
+                        "name": shortname,
+                        "ytm": coupon_percent  # пока как упрощённая доходность
+                    })
+
+                    if len(suitable_bonds) >= limit:
+                        break
+            except Exception as e:
+                print("Ошибка в обработке облигации:", e)
+                continue
+
+        print(f"Подходящих облигаций: {len(suitable_bonds)}")
+        return suitable_bonds
+    except Exception as e:
+        print("Ошибка при получении списка облигаций:", e)
+        return []
+
 
 def get_securities_data(board, ticker):
     url = (f"https://iss.moex.com/iss/engines/stock/markets/bonds/boards/{board}/securities/{ticker}/securities.xml"
@@ -508,25 +551,42 @@ class BondsApp(App):
     bg_color = ListProperty([0.95, 0.95, 0.95, 1])
     text_color = ListProperty([0, 0, 0, 1])
 
+
     def show_market(self):
-        # Пример облигаций (заглушки)
-        available = [
-            {"ticker": "SU26229RMFS3", "name": "ОФЗ 26229", "ytm": 11.2},
-            {"ticker": "RU000A105JG1", "name": "Позитив Текнолоджиз выпуск 2", "ytm": 10.7},
-            {"ticker": "RU000A1066A1", "name": "Уральская Сталь БО-1Р-2", "ytm": 12.3},
-        ]
         market_screen = self.sm.get_screen("market")
         container = market_screen.ids.market_list
         container.clear_widgets()
 
-        for bond in available:
-            box = BoxLayout(orientation="horizontal", size_hint_y=None, height="50dp", spacing=10)
-            label = Label(text=f"{bond['name']} ({bond['ticker']}) - Доходность: {bond['ytm']}%", color=self.text_color)
-            btn = Button(text="Добавить", size_hint_x=0.3)
-            btn.bind(on_release=lambda instance, b=bond: self.quick_add_bond(b))
-            box.add_widget(label)
-            box.add_widget(btn)
-            container.add_widget(box)
+        self.play_sound("click")
+
+        container.add_widget(Label(text="Загружаем облигации...", color=self.text_color, size_hint_y=None, height='30dp'))
+
+        def load_bonds_from_moex():
+            bonds = fetch_filtered_bonds(limit=10)
+
+            def update_ui(*args):
+                container.clear_widgets()
+                if not bonds:
+                    container.add_widget(Label(text="Не удалось загрузить облигации", color=self.text_color, size_hint_y=None, height='40dp'))
+                    return
+
+                for bond in bonds:
+                    box = BoxLayout(orientation="horizontal", size_hint_y=None, height="50dp", spacing=10)
+                    label = Label(text=f"{bond['name']} ({bond['ticker']}) - Купон: {bond['ytm']}%", color=self.text_color)
+                    btn = Button(text="Добавить", size_hint_x=0.3)
+                    btn.bind(on_release=lambda inst, b=bond: self.quick_add_bond(b))
+                    box.add_widget(label)
+                    box.add_widget(btn)
+                    container.add_widget(box)
+
+            # Вернёмся в главный поток UI
+            from kivy.clock import Clock
+            Clock.schedule_once(update_ui, 0)
+
+        # Запускаем в отдельном потоке
+        import threading
+        threading.Thread(target=load_bonds_from_moex).start()
+
 
     def quick_add_bond(self, bond_info):
         from datetime import date
