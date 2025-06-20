@@ -720,7 +720,7 @@ class BondsApp(App):
         except Exception as e:
             print("Ошибка при загрузке облигаций:", e)
         if not self.bonds:
-            self.quick_add_bond({"ticker": "RU000A1089J4", "name": "Селектел 001Р-04R", "ytm": 20})
+            self.quick_add_bond({"ticker": "SU26229RMFS3", "name": "ОФЗ 26229", "ytm": 10})
 
     def add_bond(self):
         screen = self.sm.get_screen('add')
