@@ -22,6 +22,7 @@ ScreenManager:
     AddBondScreen:
     BondListScreen:
     SettingsScreen:
+    BondMarketScreen:
 
 <SettingsScreen>:
     name: 'settings'
@@ -108,7 +109,49 @@ ScreenManager:
             background_color: (0.2, 0.6, 0.8, 1)
             color: (1, 1, 1, 1)
             on_release: root.manager.current = 'settings'
+        Button:
+            text: 'Рынок облигаций'
+            size_hint_y: None
+            height: '50dp'
+            background_color: (0.2, 0.6, 0.8, 1)
+            color: (1, 1, 1, 1)
+            on_release:
+                app.show_market()
+                root.manager.current = 'market'
 
+<BondMarketScreen>:
+    name: 'market'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 10
+        canvas.before:
+            Color:
+                rgba: app.bg_color
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Доступные облигации для добавления"
+            font_size: '20sp'
+            color: app.text_color
+            size_hint_y: None
+            height: '40dp'
+
+        ScrollView:
+            BoxLayout:
+                id: market_list
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+
+        Button:
+            text: "Назад"
+            size_hint_y: None
+            height: '50dp'
+            on_release: root.manager.current = 'menu'
 
 <AddBondScreen>:
     name: 'add'
@@ -335,6 +378,9 @@ class BondListScreen(Screen):
 class SettingsScreen(Screen):
     pass
 
+class BondMarketScreen(Screen):
+    pass
+
 
 class BondItem(BoxLayout):
     ticker = StringProperty('')
@@ -462,6 +508,69 @@ class BondsApp(App):
     bg_color = ListProperty([0.95, 0.95, 0.95, 1])
     text_color = ListProperty([0, 0, 0, 1])
 
+    def show_market(self):
+        # Пример облигаций (заглушки)
+        available = [
+            {"ticker": "SU26229RMFS3", "name": "ОФЗ 26229", "ytm": 11.2},
+            {"ticker": "RU000A105JG1", "name": "Позитив Текнолоджиз выпуск 2", "ytm": 10.7},
+            {"ticker": "RU000A1066A1", "name": "Уральская Сталь БО-1Р-2", "ytm": 12.3},
+        ]
+        market_screen = self.sm.get_screen("market")
+        container = market_screen.ids.market_list
+        container.clear_widgets()
+
+        for bond in available:
+            box = BoxLayout(orientation="horizontal", size_hint_y=None, height="50dp", spacing=10)
+            label = Label(text=f"{bond['name']} ({bond['ticker']}) - Доходность: {bond['ytm']}%", color=self.text_color)
+            btn = Button(text="Добавить", size_hint_x=0.3)
+            btn.bind(on_release=lambda instance, b=bond: self.quick_add_bond(b))
+            box.add_widget(label)
+            box.add_widget(btn)
+            container.add_widget(box)
+
+    def quick_add_bond(self, bond_info):
+        from datetime import date
+        today = str(date.today())
+
+        board_id = get_board_id(bond_info["ticker"])
+        if not board_id:
+            self.show_error("Не удалось получить BOARDID.")
+            return
+
+        sec_data = get_securities_data(board_id, bond_info["ticker"])
+        last_price = get_marketdata_last(board_id, bond_info["ticker"])
+        purchase_price = last_price or sec_data.get("FACEVALUE", 1000)
+        quantity = 1
+
+        monthly, annual = calculate_income(purchase_price, sec_data["COUPONVALUE"], sec_data["COUPONPERCENT"], sec_data["FACEVALUE"], quantity)
+        ytm = calculate_ytm(purchase_price, sec_data["COUPONVALUE"], sec_data["FACEVALUE"], today, sec_data["MATDATE"]) if sec_data["MATDATE"] else 0
+
+        bond = {
+            'ticker': bond_info["ticker"],
+            'purchase_price': purchase_price,
+            'purchase_date': today,
+            'quantity': quantity,
+            'shortname': sec_data["SHORTNAME"],
+            'board_id': board_id,
+            'coupon_percent': sec_data["COUPONPERCENT"],
+            'coupon_value': sec_data["COUPONVALUE"],
+            'accrued_interest': sec_data["ACCRUEDINT"],
+            'last_price': last_price,
+            'facevalue': sec_data["FACEVALUE"],
+            'matdate': sec_data["MATDATE"],
+            'offerdate': sec_data["OFFERDATE"],
+            'monthly_income': monthly,
+            'annual_income': annual,
+            'ytm': ytm
+        }
+
+        self.bonds.append(bond)
+        self.save_bonds()
+        self.update_bonds_view()
+        self.show_info(f"Облигация {bond_info['ticker']} добавлена.")
+
+
+
     def format_date(self, raw_date):
         try:
             if raw_date and len(raw_date) == 10:
@@ -560,6 +669,9 @@ class BondsApp(App):
                     self.bonds = json.load(f)
         except Exception as e:
             print("Ошибка при загрузке облигаций:", e)
+        if not self.bonds:
+            self.quick_add_bond({"ticker": "RU000A1089J4", "name": "Селектел 001Р-04R", "ytm": 20})
+
 
 
     def add_bond(self):
