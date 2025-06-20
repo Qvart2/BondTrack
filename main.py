@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import json
 import os
-
+import threading
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -15,6 +15,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.properties import BooleanProperty, ListProperty
 from kivy.core.audio import SoundLoader
+from kivy.clock import Clock
 
 kv = '''
 ScreenManager:
@@ -381,7 +382,6 @@ class SettingsScreen(Screen):
 class BondMarketScreen(Screen):
     pass
 
-
 class BondItem(BoxLayout):
     ticker = StringProperty('')
     purchase_price = NumericProperty(0)
@@ -444,7 +444,7 @@ def fetch_filtered_bonds(limit=10):
                     suitable_bonds.append({
                         "ticker": secid,
                         "name": shortname,
-                        "ytm": coupon_percent  # пока как упрощённая доходность
+                        "ytm": coupon_percent
                     })
 
                     if len(suitable_bonds) >= limit:
@@ -579,14 +579,9 @@ class BondsApp(App):
                     box.add_widget(btn)
                     container.add_widget(box)
 
-            # Вернёмся в главный поток UI
-            from kivy.clock import Clock
             Clock.schedule_once(update_ui, 0)
 
-        # Запускаем в отдельном потоке
-        import threading
         threading.Thread(target=load_bonds_from_moex).start()
-
 
     def quick_add_bond(self, bond_info):
         from datetime import date
@@ -629,8 +624,6 @@ class BondsApp(App):
         self.update_bonds_view()
         self.show_info(f"Облигация {bond_info['ticker']} добавлена.")
 
-
-
     def format_date(self, raw_date):
         try:
             if raw_date and len(raw_date) == 10:
@@ -656,7 +649,6 @@ class BondsApp(App):
         sound = SoundLoader.load(sound_path)
         if sound:
             sound.play()
-
 
     def build(self):
         self.title = "Отслеживание доходности облигаций"
@@ -709,8 +701,6 @@ class BondsApp(App):
         close_btn.bind(on_release=popup.dismiss)
         popup.open()
 
-
-
     def get_save_file(self):
         return os.path.join(self.user_data_dir, "bonds.json")
 
@@ -732,8 +722,6 @@ class BondsApp(App):
         if not self.bonds:
             self.quick_add_bond({"ticker": "RU000A1089J4", "name": "Селектел 001Р-04R", "ytm": 20})
 
-
-
     def add_bond(self):
         screen = self.sm.get_screen('add')
         ticker = screen.ids.ticker_input.text.strip()
@@ -744,7 +732,7 @@ class BondsApp(App):
         screen.ids.purchase_price_input.background_color = (1, 1, 1, 1)
         screen.ids.purchase_date_input.background_color = (1, 1, 1, 1)
         screen.ids.quantity_input.background_color = (1, 1, 1, 1)
-        
+
         try:
             datetime.strptime(purchase_date, "%Y-%m-%d")
         except ValueError:
@@ -770,7 +758,6 @@ class BondsApp(App):
         except Exception as e:
             self.show_error("Неверный формат цены покупки или количества.")
             return
-
 
         board_id = get_board_id(ticker)
         if not board_id:
